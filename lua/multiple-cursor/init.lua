@@ -1,11 +1,20 @@
-local config = require("multiple-cursor.config")
-local state = require("multiple-cursor.state")
-local finder = require("multiple-cursor.finder")
-local ui = require("multiple-cursor.ui")
-local editor = require("multiple-cursor.editor")
-local keymaps = require("multiple-cursor.keymaps")
-
 local M = {}
+
+-- Lazy load sub-modules
+local function lazy_require(module)
+  return setmetatable({}, {
+    __index = function(_, k)
+      return require(module)[k]
+    end,
+  })
+end
+
+local config = lazy_require("multiple-cursor.config")
+local state = lazy_require("multiple-cursor.state")
+local finder = lazy_require("multiple-cursor.finder")
+local ui = lazy_require("multiple-cursor.ui")
+local editor = lazy_require("multiple-cursor.editor")
+local keymaps = lazy_require("multiple-cursor.keymaps")
 
 ---Exit multi-cursor mode and cleanup
 local function exit_mode()
