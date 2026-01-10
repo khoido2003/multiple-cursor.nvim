@@ -7,33 +7,27 @@ local M = {}
 function M.setup_highlights()
   local opts = config.get()
 
-  -- Selected cursors - green background
-  vim.api.nvim_set_hl(0, opts.highlights.cursor, {
-    bg = "#2d4f2d",
-    fg = "#98c379",
-    bold = true,
-  })
+  local defs = opts.highlight_definitions or {}
 
-  -- Unselected matches - distinct yellow background with underline
-  vim.api.nvim_set_hl(0, opts.highlights.match, {
-    bg = "#5e5d42", -- Brighter dim yellow
-    fg = "#e6db74",
-    underline = true,
-  })
+  -- Selected cursors
+  if defs.cursor then
+    vim.api.nvim_set_hl(0, opts.highlights.cursor, defs.cursor)
+  end
 
-  -- Current match being reviewed (deprecated usage but kept for safety)
-  vim.api.nvim_set_hl(0, opts.highlights.current, {
-    bg = "#66d9ef",
-    fg = "#272822",
-    bold = true,
-  })
+  -- Unselected matches
+  if defs.match then
+    vim.api.nvim_set_hl(0, opts.highlights.match, defs.match)
+  end
 
-  -- Skipped matches - dim red/strikethrough style
-  vim.api.nvim_set_hl(0, "MultipleCursorSkipped", {
-    bg = "#5a3030", -- Brighter red background
-    fg = "#f92672",
-    italic = true,
-  })
+  -- Current match being reviewed
+  if defs.current then
+    vim.api.nvim_set_hl(0, opts.highlights.current, defs.current)
+  end
+
+  -- Skipped matches
+  if defs.skipped then
+    vim.api.nvim_set_hl(0, opts.highlights.skipped or "MultipleCursorSkipped", defs.skipped)
+  end
 end
 
 -- Force highlights re-application on colorscheme change
@@ -121,7 +115,7 @@ function M.update_highlights()
       hl_group = opts.highlights.cursor
     elseif skipped_set[key] then
       -- This is a skipped match
-      hl_group = "MultipleCursorSkipped"
+      hl_group = opts.highlights.skipped or "MultipleCursorSkipped"
     else
       -- This is an unselected match
       hl_group = opts.highlights.match

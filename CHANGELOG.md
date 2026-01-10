@@ -2,6 +2,12 @@
 
 ## [0.1.1] - 2026-01-10
 
+### Added
+- **Configurable Highlights**: Added `highlight_definitions` option to `setup()` allowing full customization of cursor, match, and skipped colors.
+
+### Changed
+- **Refined Defaults**: Updated default highlight colors to be more vivid and high-contrast (Black text on Bright Backgrounds) for better visibility across all colorschemes.
+
 ### Fixed
 - **Critical Edit Bug**: Fixed issue where entering insert mode at the start of a word (`i`) would delete the rest of the word. Implemented robust delta-based synchronization.
 - **Navigation Logic**: Fixed `Ctrl+N` jumping to incorrect match when selecting out of order. Now consistently jumps to the nearest unselected match relative to cursor.

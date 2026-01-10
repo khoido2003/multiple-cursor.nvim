@@ -83,8 +83,16 @@ require("multiple-cursor").setup({
     exit = "<Esc>",
   },
   highlights = {
-    cursor = "MultipleCursor",      -- Face for selected cursors
-    match = "MultipleCursorMatch",  -- Face for potential matches
+    cursor = "MultipleCursor",
+    match = "MultipleCursorMatch",
+    current = "MultipleCursorCurrent",
+    skipped = "MultipleCursorSkipped",
+  },
+  highlight_definitions = {
+    cursor = { bg = "#50fa7b", fg = "#000000", bold = true }, -- Vivid Green with Black text
+    match = { bg = "#f1fa8c", fg = "#000000", bold = true }, -- Bright Yellow with Black text
+    current = { bg = "#8be9fd", fg = "#000000", bold = true }, -- Cyan with Black text
+    skipped = { bg = "#ff5555", fg = "#000000", strikethrough = true }, -- Red with Black text
   },
   match_whole_word = true,
   case_sensitive = true,
