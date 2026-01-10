@@ -10,18 +10,38 @@ A lightweight, powerful multi-cursor plugin for Neovim that feels like VS Code's
 - **Auto-Jump**: Automatically moves to the next unselected match after you select or skip one.
 - **Preserved State**: Keeps track of skipped matches so you can come back to them.
 
-## Installation
+## 📦 Installation
 
-Using [lazy.nvim](https://github.com/folke/lazy.nvim):
+### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
 {
-  "your-username/multiple-cursor.nvim",
+  "khoido2003/multiple-cursor.nvim",
   config = function()
     require("multiple-cursor").setup()
-  end
+  end,
 }
 ```
+
+### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
+
+```lua
+use {
+  "khoido2003/multiple-cursor.nvim",
+  config = function()
+    require("multiple-cursor").setup()
+  end,
+}
+```
+
+### Manual Installation
+
+Clone to your Neovim packages directory:
+
+```bash
+git clone https://github.com/khoido2003/multiple-cursor.nvim ~/.local/share/nvim/site/pack/plugins/start/multiple-cursor
+```
+
 
 ## Keybindings
 
