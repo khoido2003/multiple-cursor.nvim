@@ -343,10 +343,20 @@ function M.get_next_unselected_match(line, col)
     end
   end
 
+  -- Helper to sort matches by position
+  local function sort_matches(a, b)
+    if a.line ~= b.line then
+      return a.line < b.line
+    end
+    return a.col_start < b.col_start
+  end
+
   -- Return first candidate after current, or first from before (wrap around)
   if #candidates > 0 then
+    table.sort(candidates, sort_matches)
     return candidates[1]
   elseif #before_current > 0 then
+    table.sort(before_current, sort_matches)
     return before_current[1]
   end
 

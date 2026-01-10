@@ -11,6 +11,8 @@ local applying_changes = false
 local augroup_name = "MultipleCursorEdit"
 -- Track the last known text length at primary cursor region
 local last_primary_length = 0
+-- Track the last known primary line length
+local last_line_len = 0
 
 ---Debug helper (set to true to enable debug messages)
 local DEBUG_ENABLED = false
@@ -60,7 +62,7 @@ function M.start_editing_mode()
     if distance < min_distance then
       min_distance = distance
       primary_idx = i
-      cursor_offset = 0 -- Default to start if not within word
+      cursor_offset = cursor.col_end - cursor.col_start -- Default to end if not within word
     end
   end
 
@@ -90,6 +92,11 @@ function M.start_editing_mode()
 
   -- Track initial word length at primary cursor
   last_primary_length = edit_positions[1].col_end - edit_positions[1].col_start
+
+  -- Track initial line length
+  local current_line_content =
+    vim.api.nvim_buf_get_lines(bufnr, edit_positions[1].line - 1, edit_positions[1].line, false)[1]
+  last_line_len = #current_line_content
 
   -- Position cursor at the same offset within the primary word as before
   local primary = edit_positions[1]
@@ -138,50 +145,51 @@ end
 
 ---Sync changes from primary cursor to all secondary cursors
 function M.sync_from_primary()
-  if applying_changes or #edit_positions < 2 then
+  if applying_changes then
     return
   end
+  applying_changes = true
 
   local bufnr = state.get_bufnr()
   local primary = edit_positions[1]
-
-  -- Get current cursor position
-  local cur_pos = vim.api.nvim_win_get_cursor(0)
-  local cur_col = cur_pos[2]
-
-  -- Get line content at primary cursor
-  local lines = vim.api.nvim_buf_get_lines(bufnr, primary.line - 1, primary.line, false)
-  if not lines or #lines == 0 then
+  local line_content_list = vim.api.nvim_buf_get_lines(bufnr, primary.line - 1, primary.line, false)
+  if not line_content_list or #line_content_list == 0 then
+    applying_changes = false
     return
   end
-  local line_content = lines[1]
+  local line_content = line_content_list[1]
 
-  -- Calculate the new length of the region at primary
-  -- The region starts at col_start and extends to wherever cursor is now
-  -- We need to figure out how much text is now in the "word" region
+  -- Calculate delta based on line length change
+  local current_line_len = #line_content
+  local delta = current_line_len - last_line_len
 
-  -- The cursor position tells us where the user is typing
-  -- new_col_end = cursor position (user is typing here)
-  -- But we need to account for text that might be after the cursor too
+  local new_primary_length = last_primary_length + delta
+  if new_primary_length < 0 then
+    new_primary_length = 0
+  end
 
-  -- For simplicity: track the text from col_start to the cursor position
-  -- This represents what the user has typed/modified so far
-  local new_text = line_content:sub(primary.col_start + 1, cur_col)
-  local new_length = cur_col - primary.col_start
+  local new_text = line_content:sub(primary.col_start + 1, primary.col_start + new_primary_length)
 
-  debug(string.format("sync: new_text='%s', new_length=%d, last_length=%d", new_text, new_length, last_primary_length))
+  debug(
+    string.format(
+      "sync: delta=%d, new_text='%s', new_length=%d, last_length=%d",
+      delta,
+      new_text,
+      new_primary_length,
+      last_primary_length
+    )
+  )
 
-  -- Check if length changed
-  if new_length == last_primary_length then
+  -- Check if length changed (or text changed - though length check covers most cases,
+  -- and text check covers replacement of same length)
+  -- For delta=0, we should still verify if text changed.
+  if delta == 0 and new_text == line_content:sub(primary.col_start + 1, primary.col_start + last_primary_length) then
+    -- No change
+    applying_changes = false
     return
   end
 
-  last_primary_length = new_length
-
-  applying_changes = true
-
-  -- Apply the same text to all secondary cursors
-  -- Sort in reverse order
+  -- Apply to all other cursors
   local indices = {}
   for i = 2, #edit_positions do
     table.insert(indices, i)
@@ -192,7 +200,7 @@ function M.sync_from_primary()
     if pa.line ~= pb.line then
       return pa.line > pb.line
     end
-    return pa.col_start > pb.col_start
+    return pa.col_start > pb.col_start -- Right-to-left
   end)
 
   for _, i in ipairs(indices) do
@@ -210,8 +218,10 @@ function M.sync_from_primary()
     end
   end
 
-  -- Update primary col_end
+  -- Update primary col_end and state
   primary.col_end = primary.col_start + #new_text
+  last_primary_length = new_primary_length
+  last_line_len = current_line_len
 
   applying_changes = false
 

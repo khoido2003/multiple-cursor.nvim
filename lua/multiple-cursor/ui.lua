@@ -38,6 +38,7 @@ end
 
 -- Force highlights re-application on colorscheme change
 vim.api.nvim_create_autocmd("ColorScheme", {
+  group = vim.api.nvim_create_augroup("MultipleCursorHighlights", { clear = true }),
   pattern = "*",
   callback = function()
     M.setup_highlights()
@@ -61,7 +62,10 @@ function M.update_edit_highlights(positions)
   -- Highlight all edit positions with the same cursor color (green)
   for _, pos in ipairs(positions) do
     pcall(function()
-      vim.api.nvim_buf_add_highlight(bufnr, ns, opts.highlights.cursor, pos.line - 1, pos.col_start, pos.col_end)
+      vim.api.nvim_buf_set_extmark(bufnr, ns, pos.line - 1, pos.col_start, {
+        end_col = pos.col_end,
+        hl_group = opts.highlights.cursor,
+      })
     end)
   end
 end
@@ -92,7 +96,6 @@ function M.update_highlights()
   local matches = state.get_matches()
   local cursors = state.get_cursors()
   local skipped = state.get_skipped()
-  local current_match = state.get_current_match()
 
   -- Create a set of cursor positions for quick lookup
   local cursor_set = {}
@@ -124,7 +127,10 @@ function M.update_highlights()
       hl_group = opts.highlights.match
     end
 
-    vim.api.nvim_buf_add_highlight(bufnr, ns, hl_group, match.line - 1, match.col_start, match.col_end)
+    vim.api.nvim_buf_set_extmark(bufnr, ns, match.line - 1, match.col_start, {
+      end_col = match.col_end,
+      hl_group = hl_group,
+    })
   end
 
   -- Add virtual text showing count

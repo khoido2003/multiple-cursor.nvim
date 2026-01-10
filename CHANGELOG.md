@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.1] - 2026-01-10
+
+### Fixed
+- **Critical Edit Bug**: Fixed issue where entering insert mode at the start of a word (`i`) would delete the rest of the word. Implemented robust delta-based synchronization.
+- **Navigation Logic**: Fixed `Ctrl+N` jumping to incorrect match when selecting out of order. Now consistently jumps to the nearest unselected match relative to cursor.
+
+### Improved
+- **Unpacked Startup**: Refactored internal `init.lua` to lazy-load modules, significantly improving startup time.
+- **Edit Cursor Position**: When entering edit mode from an unselected position, cursor now defaults to the **end** of the word instead of the start.
+
 ## [0.1.0] - 2026-01-10
 
 ### Added

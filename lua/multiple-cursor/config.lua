@@ -1,8 +1,6 @@
 ---@class MultipleCursor.Keymaps
 ---@field start_next string|false Keymap to start or add next match
 ---@field skip string|false Keymap to skip current match
----@field prev string|false Keymap to remove last cursor
----@field reselect string|false Keymap to re-select last skipped match
 ---@field select_all string|false Keymap to select all matches
 ---@field exit string|false Keymap to exit multi-cursor mode
 
