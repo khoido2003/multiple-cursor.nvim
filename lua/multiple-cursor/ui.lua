@@ -16,7 +16,7 @@ function M.setup_highlights()
 
   -- Unselected matches - distinct yellow background with underline
   vim.api.nvim_set_hl(0, opts.highlights.match, {
-    bg = "#5e5d42",  -- Brighter dim yellow
+    bg = "#5e5d42", -- Brighter dim yellow
     fg = "#e6db74",
     underline = true,
   })
@@ -30,7 +30,7 @@ function M.setup_highlights()
 
   -- Skipped matches - dim red/strikethrough style
   vim.api.nvim_set_hl(0, "MultipleCursorSkipped", {
-    bg = "#5a3030",  -- Brighter red background
+    bg = "#5a3030", -- Brighter red background
     fg = "#f92672",
     italic = true,
   })

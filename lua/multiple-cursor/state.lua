@@ -197,16 +197,16 @@ function M.add_cursor_at_position(line, col)
   if not match then
     return false
   end
-  
+
   if M.is_position_selected(match.line, match.col_start) then
     return false
   end
-  
+
   local is_skipped, skip_idx = M.is_position_skipped(match.line, match.col_start)
   if is_skipped and skip_idx then
     table.remove(M.state.skipped, skip_idx)
   end
-  
+
   table.insert(M.state.cursors, vim.deepcopy(match))
   return true
 end
@@ -220,27 +220,29 @@ function M.skip_at_position(line, col)
   if not match then
     return false, nil
   end
-  
+
   local is_selected, cursor_idx = M.is_position_selected(match.line, match.col_start)
   if is_selected and cursor_idx then
     local removed = table.remove(M.state.cursors, cursor_idx)
     table.insert(M.state.skipped, removed)
     return true, "removed"
   end
-  
+
   if not M.is_position_skipped(match.line, match.col_start) then
     table.insert(M.state.skipped, vim.deepcopy(match))
     return true, "skipped"
   end
-  
+
   return false, nil
 end
 
 ---Select all remaining matches
 function M.select_all()
   for _, match in ipairs(M.state.matches) do
-    if not M.is_position_selected(match.line, match.col_start) and 
-       not M.is_position_skipped(match.line, match.col_start) then
+    if
+      not M.is_position_selected(match.line, match.col_start)
+      and not M.is_position_skipped(match.line, match.col_start)
+    then
       table.insert(M.state.cursors, vim.deepcopy(match))
     end
   end
@@ -319,16 +321,20 @@ end
 ---@return MultipleCursor.CursorPosition? next unselected match
 function M.get_next_unselected_match(line, col)
   local matches = M.state.matches
-  if #matches == 0 then return nil end
-  
+  if #matches == 0 then
+    return nil
+  end
+
   -- Find matches after current position, then wrap around
   local candidates = {}
   local before_current = {}
-  
+
   for _, match in ipairs(matches) do
     -- Skip if already selected or skipped
-    if not M.is_position_selected(match.line, match.col_start) and
-       not M.is_position_skipped(match.line, match.col_start) then
+    if
+      not M.is_position_selected(match.line, match.col_start)
+      and not M.is_position_skipped(match.line, match.col_start)
+    then
       if match.line > line or (match.line == line and match.col_start > col) then
         table.insert(candidates, match)
       else
@@ -336,14 +342,14 @@ function M.get_next_unselected_match(line, col)
       end
     end
   end
-  
+
   -- Return first candidate after current, or first from before (wrap around)
   if #candidates > 0 then
     return candidates[1]
   elseif #before_current > 0 then
     return before_current[1]
   end
-  
+
   return nil
 end
 

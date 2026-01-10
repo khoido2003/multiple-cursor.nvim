@@ -24,8 +24,8 @@ M.defaults = {
   keymaps = {
     start_next = "<C-n>",
     skip = "<C-x>",
-    next_match = "<C-j>",   -- Navigate to next match
-    prev_match = "<C-k>",   -- Navigate to previous match
+    next_match = "<C-j>", -- Navigate to next match
+    prev_match = "<C-k>", -- Navigate to previous match
     select_all = "<C-a>",
     exit = "<Esc>",
   },

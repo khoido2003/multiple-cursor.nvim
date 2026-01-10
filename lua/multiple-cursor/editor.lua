@@ -40,9 +40,9 @@ function M.start_editing_mode()
 
   -- Find which cursor contains or is closest to current position
   local primary_idx = 1
-  local cursor_offset = 0  -- Offset within the word (0 = start, word_len = end)
+  local cursor_offset = 0 -- Offset within the word (0 = start, word_len = end)
   local min_distance = math.huge
-  
+
   for i, cursor in ipairs(cursors) do
     -- Check if cursor is within this word
     if cursor.line == current_line and current_col >= cursor.col_start and current_col <= cursor.col_end then
@@ -51,16 +51,16 @@ function M.start_editing_mode()
       min_distance = 0
       break
     end
-    
+
     -- Calculate distance (prioritize same line, then column distance)
     local line_dist = math.abs(cursor.line - current_line)
     local col_dist = math.min(math.abs(cursor.col_start - current_col), math.abs(cursor.col_end - current_col))
     local distance = line_dist * 10000 + col_dist
-    
+
     if distance < min_distance then
       min_distance = distance
       primary_idx = i
-      cursor_offset = 0  -- Default to start if not within word
+      cursor_offset = 0 -- Default to start if not within word
     end
   end
 
@@ -83,8 +83,9 @@ function M.start_editing_mode()
       col_start = cursor.col_start,
       col_end = cursor.col_end,
     }
-    debug(string.format("Cursor %d: line=%d, col_start=%d, col_end=%d", 
-      i, cursor.line, cursor.col_start, cursor.col_end))
+    debug(
+      string.format("Cursor %d: line=%d, col_start=%d, col_end=%d", i, cursor.line, cursor.col_start, cursor.col_end)
+    )
   end
 
   -- Track initial word length at primary cursor
@@ -126,7 +127,10 @@ function M.start_editing_mode()
     end,
   })
 
-  ui.notify(string.format("Editing %d locations. Edit normally, <Esc> to finish.", #edit_positions), vim.log.levels.INFO)
+  ui.notify(
+    string.format("Editing %d locations. Edit normally, <Esc> to finish.", #edit_positions),
+    vim.log.levels.INFO
+  )
 
   -- Enter insert mode at the start of the word
   vim.cmd("startinsert")
@@ -155,18 +159,17 @@ function M.sync_from_primary()
   -- Calculate the new length of the region at primary
   -- The region starts at col_start and extends to wherever cursor is now
   -- We need to figure out how much text is now in the "word" region
-  
+
   -- The cursor position tells us where the user is typing
   -- new_col_end = cursor position (user is typing here)
   -- But we need to account for text that might be after the cursor too
-  
+
   -- For simplicity: track the text from col_start to the cursor position
   -- This represents what the user has typed/modified so far
   local new_text = line_content:sub(primary.col_start + 1, cur_col)
   local new_length = cur_col - primary.col_start
 
-  debug(string.format("sync: new_text='%s', new_length=%d, last_length=%d", 
-    new_text, new_length, last_primary_length))
+  debug(string.format("sync: new_text='%s', new_length=%d, last_length=%d", new_text, new_length, last_primary_length))
 
   -- Check if length changed
   if new_length == last_primary_length then
@@ -183,7 +186,7 @@ function M.sync_from_primary()
   for i = 2, #edit_positions do
     table.insert(indices, i)
   end
-  
+
   table.sort(indices, function(a, b)
     local pa, pb = edit_positions[a], edit_positions[b]
     if pa.line ~= pb.line then
@@ -194,21 +197,13 @@ function M.sync_from_primary()
 
   for _, i in ipairs(indices) do
     local pos = edit_positions[i]
-    
-    debug(string.format("Syncing to pos %d: replacing [%d,%d] with '%s'",
-      i, pos.col_start, pos.col_end, new_text))
-    
+
+    debug(string.format("Syncing to pos %d: replacing [%d,%d] with '%s'", i, pos.col_start, pos.col_end, new_text))
+
     local ok = pcall(function()
-      vim.api.nvim_buf_set_text(
-        bufnr,
-        pos.line - 1,
-        pos.col_start,
-        pos.line - 1,
-        pos.col_end,
-        { new_text }
-      )
+      vim.api.nvim_buf_set_text(bufnr, pos.line - 1, pos.col_start, pos.line - 1, pos.col_end, { new_text })
     end)
-    
+
     if ok then
       pos.col_end = pos.col_start + #new_text
       debug("Sync succeeded, new col_end=" .. pos.col_end)
