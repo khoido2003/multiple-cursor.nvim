@@ -1,6 +1,6 @@
 -- Prevent loading twice
 if vim.g.loaded_multiple_cursor then
-	return
+  return
 end
 vim.g.loaded_multiple_cursor = true
 
