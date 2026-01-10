@@ -1,0 +1,27 @@
+# Lua
+*.luac
+lua_modules/
+
+# Neovim
+*.swp
+*.swo
+*~
+.netrwhist
+tags
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Testing
+.tests/
+test_output/
+
+# Misc
+*.log
+*.bak

@@ -20,20 +20,20 @@ local M = {}
 
 ---@type MultipleCursor.Config
 M.defaults = {
-  keymaps = {
-    start_next = "<C-n>",
-    skip = "<C-s>",
-    prev = "<C-p>",
-    select_all = "<C-x>",
-    exit = "<Esc>",
-  },
-  highlights = {
-    cursor = "MultipleCursor",
-    match = "MultipleCursorMatch",
-    current = "MultipleCursorCurrent",
-  },
-  match_whole_word = true,
-  case_sensitive = true,
+	keymaps = {
+		start_next = "<C-n>",
+		skip = "<C-s>",
+		prev = "<C-p>",
+		select_all = "<C-x>",
+		exit = "<Esc>",
+	},
+	highlights = {
+		cursor = "MultipleCursor",
+		match = "MultipleCursorMatch",
+		current = "MultipleCursorCurrent",
+	},
+	match_whole_word = true,
+	case_sensitive = true,
 }
 
 ---@type MultipleCursor.Config
@@ -42,13 +42,13 @@ M.options = {}
 ---Setup configuration with user options
 ---@param opts? MultipleCursor.Config
 function M.setup(opts)
-  M.options = vim.tbl_deep_extend("force", {}, M.defaults, opts or {})
+	M.options = vim.tbl_deep_extend("force", {}, M.defaults, opts or {})
 end
 
 ---Get current configuration
 ---@return MultipleCursor.Config
 function M.get()
-  return M.options
+	return M.options
 end
 
 return M
