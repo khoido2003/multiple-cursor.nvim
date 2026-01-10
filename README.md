@@ -16,7 +16,7 @@ A lightweight, independent Neovim plugin that provides multiple cursor functiona
 
 ```lua
 {
-  "khoido2003/multiple-cursor",
+  "khoido2003/multiple-cursor.nvim",
   config = function()
     require("multiple-cursor").setup()
   end,
@@ -27,7 +27,7 @@ A lightweight, independent Neovim plugin that provides multiple cursor functiona
 
 ```lua
 use {
-  "khoido2003/multiple-cursor",
+  "khoido2003/multiple-cursor.nvim",
   config = function()
     require("multiple-cursor").setup()
   end,
@@ -39,7 +39,7 @@ use {
 Clone to your Neovim packages directory:
 
 ```bash
-git clone https://github.com/khoido2003/multiple-cursor ~/.local/share/nvim/site/pack/plugins/start/multiple-cursor
+git clone https://github.com/khoido2003/multiple-cursor.nvim ~/.local/share/nvim/site/pack/plugins/start/multiple-cursor
 ```
 
 ## 🚀 Quick Start

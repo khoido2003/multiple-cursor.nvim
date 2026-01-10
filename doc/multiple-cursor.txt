@@ -1,0 +1,200 @@
+*multiple-cursor.txt*  Multiple cursor functionality for Neovim
+
+Author:   Your Name
+License:  MIT
+Version:  1.0.0
+
+==============================================================================
+CONTENTS                                            *multiple-cursor-contents*
+
+  1. Introduction ............................ |multiple-cursor-introduction|
+  2. Installation ............................ |multiple-cursor-installation|
+  3. Quick Start ............................. |multiple-cursor-quickstart|
+  4. Keymaps ................................. |multiple-cursor-keymaps|
+  5. Configuration ........................... |multiple-cursor-configuration|
+  6. Commands ................................ |multiple-cursor-commands|
+  7. API ..................................... |multiple-cursor-api|
+  8. Highlights .............................. |multiple-cursor-highlights|
+
+==============================================================================
+1. INTRODUCTION                                 *multiple-cursor-introduction*
+
+Multiple Cursor is a lightweight, independent Neovim plugin that provides
+multiple cursor functionality with intelligent word matching and easy
+selection/skip workflow.
+
+Features:
+- Word Matching: Find all matching occurrences of word under cursor
+- Select/Skip Workflow: Easy navigation to include or exclude matches
+- Synchronized Editing: Edit all selected locations simultaneously
+- User-Configurable Keymaps: Full customization of all keybindings
+- Zero Dependencies: Standalone plugin using only Neovim's built-in APIs
+
+==============================================================================
+2. INSTALLATION                                 *multiple-cursor-installation*
+
+Using lazy.nvim: >lua
+  {
+    "khoido2003/multiple-cursor.nvim",
+    config = function()
+      require("multiple-cursor").setup()
+    end,
+  }
+<
+
+Using packer.nvim: >lua
+  use {
+    "khoido2003/multiple-cursor.nvim",
+    config = function()
+      require("multiple-cursor").setup()
+    end,
+  }
+<
+
+==============================================================================
+3. QUICK START                                   *multiple-cursor-quickstart*
+
+1. Place your cursor on any word
+2. Press <C-n> to start multi-cursor mode
+3. Press <C-n> again to add next match, or <C-s> to skip
+4. Press `c` to change all selected words, or `d` to delete them
+5. Press <Esc> to exit
+
+==============================================================================
+4. KEYMAPS                                         *multiple-cursor-keymaps*
+
+Default keymaps when multi-cursor mode is active:
+
+                                                    *multiple-cursor-<C-n>*
+<C-n>                   Start multi-cursor mode on word under cursor.
+                        If already active, add next match to selection.
+
+                                                    *multiple-cursor-<C-s>*
+<C-s>                   Skip the current match and jump to next.
+
+                                                    *multiple-cursor-<C-p>*
+<C-p>                   Remove the last added cursor.
+
+                                                    *multiple-cursor-<C-x>*
+<C-x>                   Select all remaining matches at once.
+
+                                                    *multiple-cursor-<Esc>*
+<Esc>                   Exit multi-cursor mode and clear all cursors.
+
+                                                    *multiple-cursor-c*
+c                       Delete all selected words and enter insert mode.
+                        Text you type will appear at all cursor positions.
+
+                                                    *multiple-cursor-d*
+d                       Delete all selected words.
+
+                                                    *multiple-cursor-i*
+i                       Enter insert mode at all selected positions.
+
+==============================================================================
+5. CONFIGURATION                               *multiple-cursor-configuration*
+
+Call the setup function with a configuration table: >lua
+
+  require("multiple-cursor").setup({
+    -- Keymaps (set to false to disable)
+    keymaps = {
+      start_next = "<C-n>",      -- Start or add next match
+      skip = "<C-s>",            -- Skip current match
+      prev = "<C-p>",            -- Remove last cursor
+      select_all = "<C-x>",      -- Select all matches
+      exit = "<Esc>",            -- Exit multi-cursor mode
+    },
+
+    -- Highlight groups
+    highlights = {
+      cursor = "MultipleCursor",
+      match = "MultipleCursorMatch",
+      current = "MultipleCursorCurrent",
+    },
+
+    -- Behavior
+    match_whole_word = true,    -- Only match whole words
+    case_sensitive = true,      -- Case sensitive matching
+  })
+<
+
+                                           *multiple-cursor-config-keymaps*
+keymaps ~
+  Table of keymaps. Each can be a string (the keymap) or `false` to disable.
+
+                                        *multiple-cursor-config-highlights*
+highlights ~
+  Table of highlight group names used by the plugin.
+
+                                    *multiple-cursor-config-match_whole_word*
+match_whole_word ~
+  Boolean. When true, only matches whole words (default: true).
+  When false, matches substrings as well.
+
+                                     *multiple-cursor-config-case_sensitive*
+case_sensitive ~
+  Boolean. When true, matching is case-sensitive (default: true).
+  When false, matching ignores case.
+
+==============================================================================
+6. COMMANDS                                       *multiple-cursor-commands*
+
+                                                   *:MultipleCursorStart*
+:MultipleCursorStart    Start multi-cursor mode on word under cursor.
+
+                                                   *:MultipleCursorClear*
+:MultipleCursorClear    Clear all cursors and exit multi-cursor mode.
+
+                                               *:MultipleCursorSelectAll*
+:MultipleCursorSelectAll
+                        Select all remaining matches.
+
+==============================================================================
+7. API                                                 *multiple-cursor-api*
+
+The plugin exposes the following Lua API: >lua
+
+  local mc = require("multiple-cursor")
+
+  -- Setup the plugin (required)
+  mc.setup(opts)
+
+  -- Start multi-cursor mode on word under cursor
+  mc.start()
+
+  -- Check if multi-cursor mode is active
+  mc.is_active()  -- returns boolean
+
+  -- Exit multi-cursor mode
+  mc.exit()
+<
+
+==============================================================================
+8. HIGHLIGHTS                                     *multiple-cursor-highlights*
+
+The plugin defines the following highlight groups:
+
+                                                        *hl-MultipleCursor*
+MultipleCursor          Used for selected cursor positions.
+                        Default: green background with bold text.
+
+                                                   *hl-MultipleCursorMatch*
+MultipleCursorMatch     Used for unselected matches.
+                        Default: dim yellow background.
+
+                                                 *hl-MultipleCursorCurrent*
+MultipleCursorCurrent   Used for the current match being reviewed.
+                        Default: bright cyan background with bold text.
+
+You can override these after calling setup(): >lua
+
+  vim.api.nvim_set_hl(0, "MultipleCursor", {
+    bg = "#2d4f2d",
+    fg = "#98c379",
+    bold = true,
+  })
+<
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
