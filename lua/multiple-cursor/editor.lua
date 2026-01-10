@@ -139,8 +139,14 @@ function M.start_editing_mode()
     vim.log.levels.INFO
   )
 
-  -- Enter insert mode at the start of the word
-  vim.cmd("startinsert")
+  -- Enter insert mode
+  -- If targeting the end of the line, use append ('A' behavior)
+  -- because nvim_win_set_cursor will clamp to the last character
+  if target_col >= last_line_len then
+    vim.cmd("startinsert!")
+  else
+    vim.cmd("startinsert")
+  end
 end
 
 ---Sync changes from primary cursor to all secondary cursors
