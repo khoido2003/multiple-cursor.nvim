@@ -2,6 +2,10 @@
 
 A lightweight, powerful multi-cursor plugin for Neovim that feels like VS Code's multi-cursor implementation.
 
+<p align="center">
+  <img src="./gallery/1.png" width="700" alt="multiple-cursor.nvim showcase">
+</p>
+
 ## Features
 
 - **Position-Based Selection**: Select or skip specific matches based on your cursor position.
