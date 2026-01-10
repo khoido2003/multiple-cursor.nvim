@@ -2,6 +2,7 @@
 ---@field start_next string|false Keymap to start or add next match
 ---@field skip string|false Keymap to skip current match
 ---@field prev string|false Keymap to remove last cursor
+---@field reselect string|false Keymap to re-select last skipped match
 ---@field select_all string|false Keymap to select all matches
 ---@field exit string|false Keymap to exit multi-cursor mode
 
@@ -22,9 +23,10 @@ local M = {}
 M.defaults = {
   keymaps = {
     start_next = "<C-n>",
-    skip = "<C-s>",
-    prev = "<C-p>",
-    select_all = "<C-x>",
+    skip = "<C-x>",
+    next_match = "<C-j>",   -- Navigate to next match
+    prev_match = "<C-k>",   -- Navigate to previous match
+    select_all = "<C-a>",
     exit = "<Esc>",
   },
   highlights = {

@@ -52,20 +52,84 @@ local function start_or_add_next()
 
     -- Setup keymaps for active mode
     keymaps.setup_active_keymaps(bufnr, {
-      add_next = start_or_add_next,
-      skip = function()
-        if state.skip_current() then
+      add_next = function()
+        local pos = vim.api.nvim_win_get_cursor(0)
+        local line, col = pos[1], pos[2]
+        
+        if state.add_cursor_at_position(line, col) then
           ui.update_highlights()
-          ui.jump_to_current()
-        else
-          ui.notify("No more matches", vim.log.levels.INFO)
+          local next_match = state.get_next_unselected_match(line, col)
+          if next_match then
+            local end_col = next_match.col_end > 0 and next_match.col_end - 1 or next_match.col_start
+            vim.api.nvim_win_set_cursor(0, { next_match.line, end_col })
+          end
         end
       end,
-      prev = function()
-        if state.remove_last() then
+      skip = function()
+        local pos = vim.api.nvim_win_get_cursor(0)
+        local line, col = pos[1], pos[2]
+        
+        local success, action = state.skip_at_position(line, col)
+        if success then
           ui.update_highlights()
-        else
-          ui.notify("No cursors to remove", vim.log.levels.WARN)
+          local next_match = state.get_next_unselected_match(line, col)
+          if next_match then
+            local end_col = next_match.col_end > 0 and next_match.col_end - 1 or next_match.col_start
+            vim.api.nvim_win_set_cursor(0, { next_match.line, end_col })
+          end
+        end
+      end,
+      next_match = function()
+        -- Navigate to next match (wrap around)
+        local matches = state.get_matches()
+        if #matches == 0 then return end
+        
+        local current_pos = vim.api.nvim_win_get_cursor(0)
+        local current_line, current_col = current_pos[1], current_pos[2]
+        
+        -- Find next match after current position
+        local next_match = nil
+        local first_match = nil
+        for _, match in ipairs(matches) do
+          if not first_match then first_match = match end
+          if match.line > current_line or (match.line == current_line and match.col_start > current_col) then
+            next_match = match
+            break
+          end
+        end
+        
+        -- Wrap around to first match if no next found
+        local target = next_match or first_match
+        if target then
+          local end_col = target.col_end > 0 and target.col_end - 1 or target.col_start
+          vim.api.nvim_win_set_cursor(0, { target.line, end_col })
+        end
+      end,
+      prev_match = function()
+        -- Navigate to previous match (wrap around)
+        local matches = state.get_matches()
+        if #matches == 0 then return end
+        
+        local current_pos = vim.api.nvim_win_get_cursor(0)
+        local current_line, current_col = current_pos[1], current_pos[2]
+        
+        -- Find previous match before current position
+        local prev_match = nil
+        local last_match = nil
+        for i = #matches, 1, -1 do
+          local match = matches[i]
+          if not last_match then last_match = match end
+          if match.line < current_line or (match.line == current_line and match.col_end <= current_col) then
+            prev_match = match
+            break
+          end
+        end
+        
+        -- Wrap around to last match if no prev found
+        local target = prev_match or last_match
+        if target then
+          local end_col = target.col_end > 0 and target.col_end - 1 or target.col_start
+          vim.api.nvim_win_set_cursor(0, { target.line, end_col })
         end
       end,
       select_all = function()
@@ -98,22 +162,31 @@ local function start_or_add_next()
       end,
     })
 
-    -- Add first match as cursor
-    state.add_cursor()
-
-    -- Update UI
-    ui.update_highlights()
-    ui.jump_to_current()
-
-    local total, selected, _ = state.get_counts()
+    local total, _, _ = state.get_counts()
     ui.notify(string.format("Found %d matches for '%s'", total, word), vim.log.levels.INFO)
+
+    -- Select the word under cursor using position-based selection
+    local pos = vim.api.nvim_win_get_cursor(0)
+    local line, col = pos[1], pos[2]
+    state.add_cursor_at_position(line, col)
+    ui.update_highlights()
+    
+    local next_match = state.get_next_unselected_match(line, col)
+    if next_match then
+      local end_col = next_match.col_end > 0 and next_match.col_end - 1 or next_match.col_start
+      vim.api.nvim_win_set_cursor(0, { next_match.line, end_col })
+    end
   else
-    -- Add next match
-    if state.add_cursor() then
+    local pos = vim.api.nvim_win_get_cursor(0)
+    local line, col = pos[1], pos[2]
+    
+    if state.add_cursor_at_position(line, col) then
       ui.update_highlights()
-      ui.jump_to_current()
-    else
-      ui.notify("No more matches", vim.log.levels.INFO)
+      local next_match = state.get_next_unselected_match(line, col)
+      if next_match then
+        local end_col = next_match.col_end > 0 and next_match.col_end - 1 or next_match.col_start
+        vim.api.nvim_win_set_cursor(0, { next_match.line, end_col })
+      end
     end
   end
 end

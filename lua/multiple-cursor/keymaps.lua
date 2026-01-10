@@ -42,8 +42,11 @@ function M.setup_active_keymaps(bufnr, callbacks)
   -- Skip current match
   set_keymap(bufnr, "n", keys.skip, callbacks.skip, "MC: Skip current match")
 
-  -- Remove last cursor
-  set_keymap(bufnr, "n", keys.prev, callbacks.prev, "MC: Remove last cursor")
+  -- Navigate to next match
+  set_keymap(bufnr, "n", keys.next_match, callbacks.next_match, "MC: Go to next match")
+
+  -- Navigate to previous match
+  set_keymap(bufnr, "n", keys.prev_match, callbacks.prev_match, "MC: Go to previous match")
 
   -- Select all remaining
   set_keymap(bufnr, "n", keys.select_all, callbacks.select_all, "MC: Select all matches")
