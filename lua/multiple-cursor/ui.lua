@@ -174,27 +174,42 @@ function M.close_overlay()
   overlay_state.buf = nil
 end
 
--- Force highlights re-application on colorscheme change
-vim.api.nvim_create_autocmd("ColorScheme", {
-  group = vim.api.nvim_create_augroup("MultipleCursorHighlights", { clear = true }),
-  pattern = "*",
-  callback = function()
-    M.setup_highlights()
-  end,
-})
+local resize_augroup = vim.api.nvim_create_augroup("MultipleCursorResize", { clear = true })
+local highlight_augroup = vim.api.nvim_create_augroup("MultipleCursorHighlights", { clear = true })
 
--- Update overlay position when window is resized
-vim.api.nvim_create_autocmd("VimResized", {
-  group = vim.api.nvim_create_augroup("MultipleCursorResize", { clear = true }),
-  pattern = "*",
-  callback = function()
-    -- Only update if overlay is active
-    if overlay_state.win and vim.api.nvim_win_is_valid(overlay_state.win) then
-      local total, selected, _ = state.get_counts()
-      M.update_overlay(selected, total)
-    end
-  end,
-})
+---Setup UI autocmds
+function M.setup_autocmds()
+  -- Force highlights re-application on colorscheme change
+  vim.api.nvim_create_autocmd("ColorScheme", {
+    group = highlight_augroup,
+    pattern = "*",
+    callback = function()
+      M.setup_highlights()
+    end,
+  })
+
+  -- Update overlay position when window is resized
+  vim.api.nvim_create_autocmd("VimResized", {
+    group = resize_augroup,
+    pattern = "*",
+    callback = function()
+      -- Only update if overlay is active
+      if overlay_state.win and vim.api.nvim_win_is_valid(overlay_state.win) then
+        local total, selected, _ = state.get_counts()
+        M.update_overlay(selected, total)
+      end
+    end,
+  })
+end
+
+---Clear UI autocmds
+function M.clear_autocmds()
+  pcall(vim.api.nvim_del_augroup_by_id, resize_augroup)
+  pcall(vim.api.nvim_del_augroup_by_id, highlight_augroup)
+  -- Re-create for next time
+  resize_augroup = vim.api.nvim_create_augroup("MultipleCursorResize", { clear = true })
+  highlight_augroup = vim.api.nvim_create_augroup("MultipleCursorHighlights", { clear = true })
+end
 
 ---Update highlights for editing mode with specific positions
 ---@param positions table[] Array of {line, col_start, col_end}

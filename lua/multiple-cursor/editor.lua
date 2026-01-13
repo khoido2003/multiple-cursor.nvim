@@ -303,10 +303,10 @@ function M.stop_editing()
         -- Find all matches for this new word
         -- Use the configured matching logic (e.g. case sensitivity)
         local new_matches = finder.find_matches(new_word, bufnr)
-        
+
         -- Update state with new word and matches
         state.update_matches(new_word, new_matches)
-        
+
         -- Update highlights to show potential candidates
         ui.update_highlights()
       end

@@ -27,6 +27,7 @@ local function exit_mode()
 
   -- Clear highlights
   ui.clear_highlights()
+  ui.clear_autocmds()
 
   -- Clear keymaps
   keymaps.clear_keymaps()
@@ -297,6 +298,7 @@ function M.setup(opts)
 
   -- Setup highlights
   ui.setup_highlights()
+  ui.setup_autocmds()
 
   -- Setup global keymaps
   keymaps.setup_global_keymaps(start_or_add_next)
