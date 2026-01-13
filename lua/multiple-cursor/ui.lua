@@ -3,6 +3,12 @@ local state = require("multiple-cursor.state")
 
 local M = {}
 
+-- Overlay window state
+local overlay_state = {
+  win = nil,
+  buf = nil,
+}
+
 ---Setup highlight groups
 function M.setup_highlights()
   local opts = config.get()
@@ -28,6 +34,140 @@ function M.setup_highlights()
   if defs.skipped then
     vim.api.nvim_set_hl(0, opts.highlights.skipped or "MultipleCursorSkipped", defs.skipped)
   end
+
+  -- Overlay highlight
+  if defs.overlay then
+    vim.api.nvim_set_hl(0, "MultipleCursorOverlay", defs.overlay)
+  end
+end
+
+---Calculate overlay window position based on config
+---@param width number Width of the overlay content
+---@return number row, number col
+local function calculate_overlay_position(width)
+  local opts = config.get()
+  local position = opts.overlay.position or "top-right"
+  local padding = opts.overlay.padding or {}
+  local pad_top = padding.top or 1
+  local pad_right = padding.right or 1
+  local pad_bottom = padding.bottom or 1
+  local pad_left = padding.left or 1
+
+  local editor_width = vim.o.columns
+  local editor_height = vim.o.lines - vim.o.cmdheight - 1 -- Account for cmdline
+
+  local row, col
+
+  if position == "top-left" then
+    row = pad_top
+    col = pad_left
+  elseif position == "top-right" then
+    row = pad_top
+    col = editor_width - width - pad_right
+  elseif position == "bottom-left" then
+    row = editor_height - 1 - pad_bottom
+    col = pad_left
+  elseif position == "bottom-right" then
+    row = editor_height - 1 - pad_bottom
+    col = editor_width - width - pad_right
+  else
+    -- Default to top-right
+    row = pad_top
+    col = editor_width - width - pad_right
+  end
+
+  -- Clamp values to prevent negative positions
+  row = math.max(0, row)
+  col = math.max(0, col)
+
+  return row, col
+end
+
+---Create the overlay window
+function M.create_overlay()
+  local opts = config.get()
+
+  -- Check if overlay is enabled
+  if not opts.overlay or not opts.overlay.enabled then
+    return
+  end
+
+  -- Close existing overlay if any
+  M.close_overlay()
+
+  -- Create buffer for overlay
+  overlay_state.buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = overlay_state.buf })
+
+  -- Initial content
+  local content = " [0/0] selected "
+  local width = #content
+
+  local row, col = calculate_overlay_position(width)
+
+  -- Create floating window
+  overlay_state.win = vim.api.nvim_open_win(overlay_state.buf, false, {
+    relative = "editor",
+    row = row,
+    col = col,
+    width = width,
+    height = 1,
+    style = "minimal",
+    border = "rounded",
+    focusable = false,
+    zindex = 50,
+  })
+
+  -- Apply highlight to the window
+  vim.api.nvim_set_option_value("winhl", "Normal:MultipleCursorOverlay,FloatBorder:MultipleCursorOverlay", { win = overlay_state.win })
+end
+
+---Update the overlay content
+---@param selected number Number of selected cursors
+---@param total number Total number of matches
+function M.update_overlay(selected, total)
+  local opts = config.get()
+
+  -- Check if overlay is enabled
+  if not opts.overlay or not opts.overlay.enabled then
+    return
+  end
+
+  -- Check if overlay window exists and is valid
+  if not overlay_state.win or not vim.api.nvim_win_is_valid(overlay_state.win) then
+    M.create_overlay()
+  end
+
+  if not overlay_state.buf or not vim.api.nvim_buf_is_valid(overlay_state.buf) then
+    return
+  end
+
+  -- Update content
+  local content = string.format(" [%d/%d] selected ", selected, total)
+  vim.api.nvim_buf_set_lines(overlay_state.buf, 0, -1, false, { content })
+
+  -- Update window size and position
+  local width = #content
+  local row, col = calculate_overlay_position(width)
+
+  if overlay_state.win and vim.api.nvim_win_is_valid(overlay_state.win) then
+    vim.api.nvim_win_set_config(overlay_state.win, {
+      relative = "editor",
+      row = row,
+      col = col,
+      width = width,
+      height = 1,
+    })
+  end
+end
+
+---Close the overlay window
+function M.close_overlay()
+  if overlay_state.win and vim.api.nvim_win_is_valid(overlay_state.win) then
+    vim.api.nvim_win_close(overlay_state.win, true)
+  end
+  overlay_state.win = nil
+  overlay_state.buf = nil
 end
 
 -- Force highlights re-application on colorscheme change
@@ -36,6 +176,19 @@ vim.api.nvim_create_autocmd("ColorScheme", {
   pattern = "*",
   callback = function()
     M.setup_highlights()
+  end,
+})
+
+-- Update overlay position when window is resized
+vim.api.nvim_create_autocmd("VimResized", {
+  group = vim.api.nvim_create_augroup("MultipleCursorResize", { clear = true }),
+  pattern = "*",
+  callback = function()
+    -- Only update if overlay is active
+    if overlay_state.win and vim.api.nvim_win_is_valid(overlay_state.win) then
+      local total, selected, _ = state.get_counts()
+      M.update_overlay(selected, total)
+    end
   end,
 })
 
@@ -72,6 +225,9 @@ function M.clear_highlights()
   if bufnr > 0 and vim.api.nvim_buf_is_valid(bufnr) then
     vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
   end
+
+  -- Close overlay window
+  M.close_overlay()
 end
 
 ---Update all highlights based on current state
@@ -128,7 +284,7 @@ function M.update_highlights()
   end
 
   -- Add virtual text showing count
-  local total, selected, skipped = state.get_counts()
+  local total, selected, skipped_count = state.get_counts()
   local status_text = string.format(" [%d/%d] selected", selected, total)
 
   -- Show status in virtual text at the end of current line
@@ -137,6 +293,9 @@ function M.update_highlights()
     virt_text = { { status_text, "Comment" } },
     virt_text_pos = "eol",
   })
+
+  -- Update overlay window
+  M.update_overlay(selected, total)
 end
 
 ---Move cursor to the current match (at end of word)

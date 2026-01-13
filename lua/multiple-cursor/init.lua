@@ -37,18 +37,45 @@ local function exit_mode()
   ui.notify("Exited multi-cursor mode", vim.log.levels.INFO)
 end
 
----Start multi-cursor mode on word under cursor
-local function start_or_add_next()
+---Start multi-cursor mode on word under cursor or visual selection
+---@param from_visual? boolean If true, use visual selection instead of word under cursor
+local function start_or_add_next(from_visual)
   if not state.is_active() then
     -- Start new multi-cursor session
-    local word = finder.get_word_under_cursor()
+    local word
+    local opts = require("multiple-cursor.config").get()
+
+    if from_visual then
+      -- Get visual selection
+      local selected_text = finder.get_visual_selection()
+      if selected_text and selected_text ~= "" then
+        word = selected_text
+      end
+    end
+
+    -- Fall back to word under cursor
+    if not word or word == "" then
+      word = finder.get_word_under_cursor()
+    end
+
     if word == "" then
       ui.notify("No word under cursor", vim.log.levels.WARN)
       return
     end
 
     local bufnr = vim.api.nvim_get_current_buf()
-    local matches = finder.find_matches_from_cursor(word, bufnr)
+
+    -- When from visual selection, use find_matches with match_whole_word=false temporarily
+    local matches
+    if from_visual then
+      -- For visual selection, don't require whole word match
+      local original_whole_word = opts.match_whole_word
+      opts.match_whole_word = false
+      matches = finder.find_matches_from_cursor(word, bufnr)
+      opts.match_whole_word = original_whole_word
+    else
+      matches = finder.find_matches_from_cursor(word, bufnr)
+    end
 
     if #matches == 0 then
       ui.notify("No matches found for: " .. word, vim.log.levels.WARN)
@@ -175,6 +202,28 @@ local function start_or_add_next()
           editor.start_editing()
         else
           ui.notify("Select at least one match first", vim.log.levels.WARN)
+        end
+      end,
+      insert_start = function()
+        if #state.get_cursors() > 0 then
+          editor.start_editing_at_start()
+        else
+          ui.notify("Select at least one match first", vim.log.levels.WARN)
+        end
+      end,
+      append = function()
+        if #state.get_cursors() > 0 then
+          editor.start_editing_at_end()
+        else
+          ui.notify("Select at least one match first", vim.log.levels.WARN)
+        end
+      end,
+      undo_cursor = function()
+        if state.remove_last() then
+          ui.update_highlights()
+          ui.notify("Removed last cursor", vim.log.levels.INFO)
+        else
+          ui.notify("No cursors to remove", vim.log.levels.WARN)
         end
       end,
     })

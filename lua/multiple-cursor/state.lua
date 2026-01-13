@@ -290,10 +290,6 @@ end
 ---Get match and cursor counts
 ---@return number total_matches
 ---@return number selected_cursors
----@return number current_idx
----Get match and cursor counts
----@return number total_matches
----@return number selected_cursors
 ---@return number skipped_count
 function M.get_counts()
   return #M.state.matches, #M.state.cursors, #M.state.skipped

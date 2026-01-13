@@ -8,6 +8,37 @@ function M.get_word_under_cursor()
   return vim.fn.expand("<cword>")
 end
 
+---Get the visually selected text
+---@return string?, number?, number?, number?, number? text, start_line, start_col, end_line, end_col
+function M.get_visual_selection()
+  -- Get visual selection marks
+  local start_pos = vim.fn.getpos("'<")
+  local end_pos = vim.fn.getpos("'>")
+
+  local start_line = start_pos[2]
+  local start_col = start_pos[3] - 1 -- 0-indexed
+  local end_line = end_pos[2]
+  local end_col = end_pos[3] -- exclusive end
+
+  -- Only support single-line selection for now
+  if start_line ~= end_line then
+    return nil, nil, nil, nil, nil
+  end
+
+  -- Get the selected text
+  local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, start_line, false)
+  if not lines or #lines == 0 then
+    return nil, nil, nil, nil, nil
+  end
+
+  local text = lines[1]:sub(start_col + 1, end_col)
+  if text == "" then
+    return nil, nil, nil, nil, nil
+  end
+
+  return text, start_line, start_col, end_line, end_col
+end
+
 ---Find all matches of a word in the current buffer
 ---@param word string The word to search for
 ---@param bufnr number Buffer number

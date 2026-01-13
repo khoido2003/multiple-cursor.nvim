@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.2] - 2026-01-13
+
+### Added
+- **Floating Overlay Window**: Configurable floating overlay for selection count display.
+  - Positions: `top-left`, `top-right`, `bottom-left`, `bottom-right`
+  - Configurable padding and colors via `highlight_definitions.overlay`
+- **Visual Selection Support**: `Ctrl+N` now works on visual selection (not just word under cursor)
+- **Insert Keys**: Added `I` (insert at start) and `A` (append at end) edit modes
+- **Undo Cursor**: Added `Ctrl+U` to remove the last added cursor
+
+### Fixed
+- **Overlay Resize**: Overlay now repositions when terminal window is resized
+- **Overlay Position Clamping**: Prevents negative positions on narrow windows
+- **Multi-line Editing**: Improved sync for cursors across different lines
+- **Duplicate Annotations**: Removed duplicate `@return` comments in `state.lua`
+
 ## [0.1.1] - 2026-01-10
 
 ### Added

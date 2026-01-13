@@ -93,12 +93,20 @@ require("multiple-cursor").setup({
     skipped = "MultipleCursorSkipped",
   },
   highlight_definitions = {
-    cursor = { bg = "#50fa7b", fg = "#000000", bold = true }, -- Vivid Green with Black text
-    match = { bg = "#f1fa8c", fg = "#000000", bold = true }, -- Bright Yellow with Black text
-    current = { bg = "#8be9fd", fg = "#000000", bold = true }, -- Cyan with Black text
-    skipped = { bg = "#ff5555", fg = "#000000", strikethrough = true }, -- Red with Black text
+    cursor = { bg = "#00FA9A", fg = "#000000", bold = true }, -- Medium Spring Green (selected cursors)
+    match = { bg = "#FFD700", fg = "#000000", bold = true }, -- Gold (unselected matches)
+    current = { bg = "#00CED1", fg = "#000000", bold = true }, -- Dark Turquoise (current review)
+    skipped = { bg = "#FF6347", fg = "#000000", bold = true }, -- Tomato (skipped)
+    overlay = { bg = "#E84A72", fg = "#ffffff", bold = true }, -- Rose Pink (Monokai-inspired)
+  },
+  -- Floating overlay window for selection count (easier to see)
+  overlay = {
+    enabled = true,                              -- Enable/disable the overlay
+    position = "top-right",                      -- "top-left", "top-right", "bottom-left", "bottom-right"
+    padding = { top = 1, right = 1, bottom = 1, left = 1 }, -- Padding from screen edges
   },
   match_whole_word = true,
   case_sensitive = true,
 })
 ```
+

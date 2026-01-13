@@ -62,6 +62,15 @@ function M.setup_active_keymaps(bufnr, callbacks)
 
   -- Insert mode (i) - edit at all positions
   set_keymap(bufnr, "n", "i", callbacks.insert, "MC: Insert at all positions")
+
+  -- Insert at start (I) - edit at start of all words
+  set_keymap(bufnr, "n", "I", callbacks.insert_start, "MC: Insert at start of all positions")
+
+  -- Append at end (A) - edit at end of all words
+  set_keymap(bufnr, "n", "A", callbacks.append, "MC: Append at end of all positions")
+
+  -- Undo last cursor (Ctrl+U)
+  set_keymap(bufnr, "n", "<C-u>", callbacks.undo_cursor, "MC: Undo last added cursor")
 end
 
 ---Clear all active keymaps
@@ -83,6 +92,18 @@ function M.setup_global_keymaps(start_callback)
       noremap = true,
       silent = true,
       desc = "MC: Start multi-cursor on word under cursor",
+    })
+
+    -- Also set up visual mode keymap for selection-based matching
+    vim.keymap.set("v", keys.start_next, function()
+      -- Exit visual mode first to set marks
+      vim.cmd("normal! " .. vim.api.nvim_replace_termcodes("<Esc>", true, false, true))
+      -- Then call with visual flag
+      start_callback(true)
+    end, {
+      noremap = true,
+      silent = true,
+      desc = "MC: Start multi-cursor on visual selection",
     })
   end
 end

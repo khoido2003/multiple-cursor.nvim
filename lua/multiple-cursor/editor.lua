@@ -165,15 +165,23 @@ function M.sync_from_primary()
   end
   local line_content = line_content_list[1]
 
-  -- Calculate delta based on line length change
+  -- Get cursor position to determine new text boundaries
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local cursor_col = cursor_pos[2]
+
+  -- Calculate new word boundaries based on cursor movement from col_start
+  -- The new text extends from col_start to the current cursor position
+  -- But we need to account for the offset within the word
   local current_line_len = #line_content
   local delta = current_line_len - last_line_len
 
+  -- New primary length = original length + delta
   local new_primary_length = last_primary_length + delta
   if new_primary_length < 0 then
     new_primary_length = 0
   end
 
+  -- Extract the new text at primary position
   local new_text = line_content:sub(primary.col_start + 1, primary.col_start + new_primary_length)
 
   debug(
@@ -186,16 +194,19 @@ function M.sync_from_primary()
     )
   )
 
-  -- Check if length changed (or text changed - though length check covers most cases,
-  -- and text check covers replacement of same length)
-  -- For delta=0, we should still verify if text changed.
-  if delta == 0 and new_text == line_content:sub(primary.col_start + 1, primary.col_start + last_primary_length) then
-    -- No change
+  -- Check if text actually changed
+  local old_text = line_content:sub(primary.col_start + 1, primary.col_start + last_primary_length)
+  if new_text == old_text and delta == 0 then
     applying_changes = false
     return
   end
 
-  -- Apply to all other cursors
+  -- Group cursors by line for proper offset adjustment
+  -- When editing multiple cursors on the same line, we need to adjust
+  -- positions right-to-left to avoid offset corruption
+
+  -- Sort indices by line (descending) then by col_start (descending)
+  -- This ensures we edit from bottom-to-top and right-to-left
   local indices = {}
   for i = 2, #edit_positions do
     table.insert(indices, i)
@@ -206,20 +217,44 @@ function M.sync_from_primary()
     if pa.line ~= pb.line then
       return pa.line > pb.line
     end
-    return pa.col_start > pb.col_start -- Right-to-left
+    return pa.col_start > pb.col_start -- Right-to-left on same line
   end)
+
+  -- Track column offset adjustments per line
+  local line_offsets = {}
 
   for _, i in ipairs(indices) do
     local pos = edit_positions[i]
+    local offset = line_offsets[pos.line] or 0
 
-    debug(string.format("Syncing to pos %d: replacing [%d,%d] with '%s'", i, pos.col_start, pos.col_end, new_text))
+    -- Adjust position by any previous edits on the same line
+    local adjusted_col_start = pos.col_start + offset
+    local adjusted_col_end = pos.col_end + offset
+
+    debug(string.format(
+      "Syncing to pos %d (line %d): replacing [%d,%d] (adjusted from [%d,%d]) with '%s'",
+      i, pos.line, adjusted_col_start, adjusted_col_end, pos.col_start, pos.col_end, new_text
+    ))
 
     local ok = pcall(function()
-      vim.api.nvim_buf_set_text(bufnr, pos.line - 1, pos.col_start, pos.line - 1, pos.col_end, { new_text })
+      vim.api.nvim_buf_set_text(bufnr, pos.line - 1, adjusted_col_start, pos.line - 1, adjusted_col_end, { new_text })
     end)
 
     if ok then
-      pos.col_end = pos.col_start + #new_text
+      -- Calculate the length change for this edit
+      local old_len = pos.col_end - pos.col_start
+      local new_len = #new_text
+      local len_change = new_len - old_len
+
+      -- Update the stored position
+      pos.col_start = adjusted_col_start
+      pos.col_end = adjusted_col_start + new_len
+
+      -- We're going right-to-left, so no need to accumulate offset for positions
+      -- to our right (they're already processed). But for consistency, track it.
+      -- Actually, since we process right-to-left, earlier (left) positions on same
+      -- line don't need adjustment from this edit.
+
       debug("Sync succeeded, new col_end=" .. pos.col_end)
     end
   end
@@ -277,6 +312,43 @@ end
 
 ---Perform a change operation - same as start_editing (keeps words visible)
 function M.change_word()
+  M.start_editing_mode()
+end
+
+---Start editing at the start of all words (for 'I' key)
+function M.start_editing_at_start()
+  local bufnr = state.get_bufnr()
+  local cursors = state.get_cursors()
+
+  if #cursors == 0 then
+    ui.notify("No cursors selected!", vim.log.levels.WARN)
+    return
+  end
+
+  -- Force cursor to start of first word
+  local first_cursor = cursors[1]
+  vim.api.nvim_win_set_cursor(0, { first_cursor.line, first_cursor.col_start })
+
+  -- Then start normal editing (which will pick up cursor position)
+  M.start_editing_mode()
+end
+
+---Start editing at the end of all words (for 'A' key)
+function M.start_editing_at_end()
+  local bufnr = state.get_bufnr()
+  local cursors = state.get_cursors()
+
+  if #cursors == 0 then
+    ui.notify("No cursors selected!", vim.log.levels.WARN)
+    return
+  end
+
+  -- Force cursor to end of first word
+  local first_cursor = cursors[1]
+  local end_col = first_cursor.col_end > 0 and first_cursor.col_end or first_cursor.col_start
+  vim.api.nvim_win_set_cursor(0, { first_cursor.line, end_col })
+
+  -- Then start normal editing (which will pick up cursor position)
   M.start_editing_mode()
 end
 

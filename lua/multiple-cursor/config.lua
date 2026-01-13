@@ -17,11 +17,26 @@
 ---@field match? MultipleCursor.HighlightDefinition
 ---@field current? MultipleCursor.HighlightDefinition
 ---@field skipped? MultipleCursor.HighlightDefinition
+---@field overlay? MultipleCursor.HighlightDefinition
+
+---@class MultipleCursor.OverlayPadding
+---@field top? number Padding from top edge (default: 1)
+---@field right? number Padding from right edge (default: 1)
+---@field bottom? number Padding from bottom edge (default: 1)
+---@field left? number Padding from left edge (default: 1)
+
+---@alias MultipleCursor.OverlayPosition "top-left"|"top-right"|"bottom-left"|"bottom-right"
+
+---@class MultipleCursor.OverlayConfig
+---@field enabled boolean Enable/disable the overlay window
+---@field position MultipleCursor.OverlayPosition Position on screen
+---@field padding MultipleCursor.OverlayPadding Padding from screen edges
 
 ---@class MultipleCursor.Config
 ---@field keymaps MultipleCursor.Keymaps
 ---@field highlights MultipleCursor.Highlights
 ---@field highlight_definitions? MultipleCursor.HighlightDefinitions
+---@field overlay MultipleCursor.OverlayConfig Overlay window configuration
 ---@field match_whole_word boolean Only match whole words
 ---@field case_sensitive boolean Case sensitive matching
 
@@ -44,10 +59,16 @@ M.defaults = {
     skipped = "MultipleCursorSkipped",
   },
   highlight_definitions = {
-    cursor = { bg = "#50fa7b", fg = "#000000", bold = true }, -- Vivid Green with Black text
-    match = { bg = "#f1fa8c", fg = "#000000", bold = true }, -- Bright Yellow with Black text
-    current = { bg = "#8be9fd", fg = "#000000", bold = true }, -- Cyan with Black text
-    skipped = { bg = "#ff5555", fg = "#000000", strikethrough = true }, -- Red with Black text
+    cursor = { bg = "#00FA9A", fg = "#000000", bold = true }, -- Medium Spring Green (softer on eyes)
+    match = { bg = "#FFD700", fg = "#000000", bold = true }, -- Gold (warmer than Monokai yellow)
+    current = { bg = "#00CED1", fg = "#000000", bold = true }, -- Dark Turquoise (shifted from Monokai cyan)
+    skipped = { bg = "#FF6347", fg = "#000000", bold = true }, -- Tomato (redder than Monokai orange)
+    overlay = { bg = "#E84A72", fg = "#ffffff", bold = true }, -- Rose Pink (Monokai-inspired, slightly shifted)
+  },
+  overlay = {
+    enabled = true,
+    position = "top-right",
+    padding = { top = 1, right = 1, bottom = 1, left = 1 },
   },
   match_whole_word = true,
   case_sensitive = true,
