@@ -9,6 +9,11 @@
 - **Visual Selection Support**: `Ctrl+N` now works on visual selection (not just word under cursor)
 - **Insert Keys**: Added `I` (insert at start) and `A` (append at end) edit modes
 - **Undo Cursor**: Added `Ctrl+U` to remove the last added cursor
+- **Vim-style Operators**: Apply operations to all selected words at once:
+  - `gy` - Yank all selected words
+  - `g~` - Toggle case
+  - `gu` - Lowercase all
+  - `gU` - Uppercase all
 
 ### Fixed
 - **Overlay Resize**: Overlay now repositions when terminal window is resized

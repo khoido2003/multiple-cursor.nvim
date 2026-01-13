@@ -71,6 +71,12 @@ function M.setup_active_keymaps(bufnr, callbacks)
 
   -- Undo last cursor (Ctrl+U)
   set_keymap(bufnr, "n", "<C-u>", callbacks.undo_cursor, "MC: Undo last added cursor")
+
+  -- Operators (Vim-style)
+  set_keymap(bufnr, "n", "gy", callbacks.yank_all, "MC: Yank all selected words")
+  set_keymap(bufnr, "n", "g~", callbacks.toggle_case, "MC: Toggle case of all selected words")
+  set_keymap(bufnr, "n", "gu", callbacks.lowercase, "MC: Lowercase all selected words")
+  set_keymap(bufnr, "n", "gU", callbacks.uppercase, "MC: Uppercase all selected words")
 end
 
 ---Clear all active keymaps

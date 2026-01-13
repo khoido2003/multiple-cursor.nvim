@@ -352,4 +352,137 @@ function M.start_editing_at_end()
   M.start_editing_mode()
 end
 
+---Yank all selected words to register
+function M.yank_all()
+  local bufnr = state.get_bufnr()
+  local cursors = state.get_cursors()
+
+  if #cursors == 0 then
+    ui.notify("No cursors selected!", vim.log.levels.WARN)
+    return
+  end
+
+  -- Collect all words
+  local words = {}
+  for _, cursor in ipairs(cursors) do
+    local lines = vim.api.nvim_buf_get_lines(bufnr, cursor.line - 1, cursor.line, false)
+    if lines and #lines > 0 then
+      local word = lines[1]:sub(cursor.col_start + 1, cursor.col_end)
+      table.insert(words, word)
+    end
+  end
+
+  -- Join and yank to default register
+  local text = table.concat(words, "\n")
+  vim.fn.setreg('"', text)
+  vim.fn.setreg('0', text)
+
+  ui.notify(string.format("Yanked %d words", #words), vim.log.levels.INFO)
+end
+
+---Toggle case of all selected words
+function M.toggle_case()
+  local bufnr = state.get_bufnr()
+  local cursors = state.get_cursors()
+
+  if #cursors == 0 then
+    ui.notify("No cursors selected!", vim.log.levels.WARN)
+    return
+  end
+
+  -- Sort in reverse order for safe editing
+  local sorted_cursors = vim.deepcopy(cursors)
+  table.sort(sorted_cursors, function(a, b)
+    if a.line ~= b.line then
+      return a.line > b.line
+    end
+    return a.col_start > b.col_start
+  end)
+
+  for _, cursor in ipairs(sorted_cursors) do
+    local lines = vim.api.nvim_buf_get_lines(bufnr, cursor.line - 1, cursor.line, false)
+    if lines and #lines > 0 then
+      local word = lines[1]:sub(cursor.col_start + 1, cursor.col_end)
+      -- Toggle: if mostly upper, make lower; if mostly lower, make upper
+      local upper_count = 0
+      for i = 1, #word do
+        local c = word:sub(i, i)
+        if c:match("%u") then upper_count = upper_count + 1 end
+      end
+      local new_word
+      if upper_count > #word / 2 then
+        new_word = word:lower()
+      else
+        new_word = word:upper()
+      end
+      vim.api.nvim_buf_set_text(bufnr, cursor.line - 1, cursor.col_start, cursor.line - 1, cursor.col_end, { new_word })
+    end
+  end
+
+  ui.notify(string.format("Toggled case of %d words", #cursors), vim.log.levels.INFO)
+  ui.update_highlights()
+end
+
+---Lowercase all selected words
+function M.lowercase()
+  local bufnr = state.get_bufnr()
+  local cursors = state.get_cursors()
+
+  if #cursors == 0 then
+    ui.notify("No cursors selected!", vim.log.levels.WARN)
+    return
+  end
+
+  -- Sort in reverse order
+  local sorted_cursors = vim.deepcopy(cursors)
+  table.sort(sorted_cursors, function(a, b)
+    if a.line ~= b.line then
+      return a.line > b.line
+    end
+    return a.col_start > b.col_start
+  end)
+
+  for _, cursor in ipairs(sorted_cursors) do
+    local lines = vim.api.nvim_buf_get_lines(bufnr, cursor.line - 1, cursor.line, false)
+    if lines and #lines > 0 then
+      local word = lines[1]:sub(cursor.col_start + 1, cursor.col_end)
+      vim.api.nvim_buf_set_text(bufnr, cursor.line - 1, cursor.col_start, cursor.line - 1, cursor.col_end, { word:lower() })
+    end
+  end
+
+  ui.notify(string.format("Lowercased %d words", #cursors), vim.log.levels.INFO)
+  ui.update_highlights()
+end
+
+---Uppercase all selected words
+function M.uppercase()
+  local bufnr = state.get_bufnr()
+  local cursors = state.get_cursors()
+
+  if #cursors == 0 then
+    ui.notify("No cursors selected!", vim.log.levels.WARN)
+    return
+  end
+
+  -- Sort in reverse order
+  local sorted_cursors = vim.deepcopy(cursors)
+  table.sort(sorted_cursors, function(a, b)
+    if a.line ~= b.line then
+      return a.line > b.line
+    end
+    return a.col_start > b.col_start
+  end)
+
+  for _, cursor in ipairs(sorted_cursors) do
+    local lines = vim.api.nvim_buf_get_lines(bufnr, cursor.line - 1, cursor.line, false)
+    if lines and #lines > 0 then
+      local word = lines[1]:sub(cursor.col_start + 1, cursor.col_end)
+      vim.api.nvim_buf_set_text(bufnr, cursor.line - 1, cursor.col_start, cursor.line - 1, cursor.col_end, { word:upper() })
+    end
+  end
+
+  ui.notify(string.format("Uppercased %d words", #cursors), vim.log.levels.INFO)
+  ui.update_highlights()
+end
+
 return M

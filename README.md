@@ -55,13 +55,24 @@ git clone https://github.com/khoido2003/multiple-cursor.nvim ~/.local/share/nvim
 
 | Key | Action | Description |
 |-----|--------|-------------|
-| `<C-n>` | **Add Cursor** | Adds a cursor to the match under your current cursor position. If no session is active, starts one on the current word. |
+| `<C-n>` | **Add Cursor** | Adds a cursor to the match under cursor. Works in normal and visual mode. |
 | `<C-x>` | **Skip / Remove** | Skips or removes the cursor from the match under your current position. |
 | `<C-j>` | **Next Match** | Jump to the next match occurrence. |
 | `<C-k>` | **Prev Match** | Jump to the previous match occurrence. |
 | `<C-a>` | **Select All** | Selects all remaining matches in the buffer. |
+| `<C-u>` | **Undo Cursor** | Remove the last added cursor. |
 | `c` / `i` / `I` / `A` | **Edit** | Enter edit mode. Changes are synced to all selected cursors. |
+| `d` | **Delete** | Delete all selected words. |
 | `<Esc>` | **Exit** | Exit multi-cursor mode. |
+
+### Operators (Vim-style)
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `gy` | **Yank All** | Yank all selected words to register. |
+| `g~` | **Toggle Case** | Toggle case of all selected words. |
+| `gu` | **Lowercase** | Convert all selected words to lowercase. |
+| `gU` | **Uppercase** | Convert all selected words to UPPERCASE. |
 
 ## Usage Workflow
 

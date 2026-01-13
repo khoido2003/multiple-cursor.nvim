@@ -226,6 +226,35 @@ local function start_or_add_next(from_visual)
           ui.notify("No cursors to remove", vim.log.levels.WARN)
         end
       end,
+      -- Operators
+      yank_all = function()
+        if #state.get_cursors() > 0 then
+          editor.yank_all()
+        else
+          ui.notify("Select at least one match first", vim.log.levels.WARN)
+        end
+      end,
+      toggle_case = function()
+        if #state.get_cursors() > 0 then
+          editor.toggle_case()
+        else
+          ui.notify("Select at least one match first", vim.log.levels.WARN)
+        end
+      end,
+      lowercase = function()
+        if #state.get_cursors() > 0 then
+          editor.lowercase()
+        else
+          ui.notify("Select at least one match first", vim.log.levels.WARN)
+        end
+      end,
+      uppercase = function()
+        if #state.get_cursors() > 0 then
+          editor.uppercase()
+        else
+          ui.notify("Select at least one match first", vim.log.levels.WARN)
+        end
+      end,
     })
 
     local total, _, _ = state.get_counts()
