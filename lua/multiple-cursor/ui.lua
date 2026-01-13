@@ -119,7 +119,11 @@ function M.create_overlay()
   })
 
   -- Apply highlight to the window
-  vim.api.nvim_set_option_value("winhl", "Normal:MultipleCursorOverlay,FloatBorder:MultipleCursorOverlay", { win = overlay_state.win })
+  vim.api.nvim_set_option_value(
+    "winhl",
+    "Normal:MultipleCursorOverlay,FloatBorder:MultipleCursorOverlay",
+    { win = overlay_state.win }
+  )
 end
 
 ---Update the overlay content

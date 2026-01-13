@@ -231,10 +231,18 @@ function M.sync_from_primary()
     local adjusted_col_start = pos.col_start + offset
     local adjusted_col_end = pos.col_end + offset
 
-    debug(string.format(
-      "Syncing to pos %d (line %d): replacing [%d,%d] (adjusted from [%d,%d]) with '%s'",
-      i, pos.line, adjusted_col_start, adjusted_col_end, pos.col_start, pos.col_end, new_text
-    ))
+    debug(
+      string.format(
+        "Syncing to pos %d (line %d): replacing [%d,%d] (adjusted from [%d,%d]) with '%s'",
+        i,
+        pos.line,
+        adjusted_col_start,
+        adjusted_col_end,
+        pos.col_start,
+        pos.col_end,
+        new_text
+      )
+    )
 
     local ok = pcall(function()
       vim.api.nvim_buf_set_text(bufnr, pos.line - 1, adjusted_col_start, pos.line - 1, adjusted_col_end, { new_text })
@@ -375,7 +383,7 @@ function M.yank_all()
   -- Join and yank to default register
   local text = table.concat(words, "\n")
   vim.fn.setreg('"', text)
-  vim.fn.setreg('0', text)
+  vim.fn.setreg("0", text)
 
   ui.notify(string.format("Yanked %d words", #words), vim.log.levels.INFO)
 end
@@ -407,7 +415,9 @@ function M.toggle_case()
       local upper_count = 0
       for i = 1, #word do
         local c = word:sub(i, i)
-        if c:match("%u") then upper_count = upper_count + 1 end
+        if c:match("%u") then
+          upper_count = upper_count + 1
+        end
       end
       local new_word
       if upper_count > #word / 2 then
@@ -446,7 +456,14 @@ function M.lowercase()
     local lines = vim.api.nvim_buf_get_lines(bufnr, cursor.line - 1, cursor.line, false)
     if lines and #lines > 0 then
       local word = lines[1]:sub(cursor.col_start + 1, cursor.col_end)
-      vim.api.nvim_buf_set_text(bufnr, cursor.line - 1, cursor.col_start, cursor.line - 1, cursor.col_end, { word:lower() })
+      vim.api.nvim_buf_set_text(
+        bufnr,
+        cursor.line - 1,
+        cursor.col_start,
+        cursor.line - 1,
+        cursor.col_end,
+        { word:lower() }
+      )
     end
   end
 
@@ -477,7 +494,14 @@ function M.uppercase()
     local lines = vim.api.nvim_buf_get_lines(bufnr, cursor.line - 1, cursor.line, false)
     if lines and #lines > 0 then
       local word = lines[1]:sub(cursor.col_start + 1, cursor.col_end)
-      vim.api.nvim_buf_set_text(bufnr, cursor.line - 1, cursor.col_start, cursor.line - 1, cursor.col_end, { word:upper() })
+      vim.api.nvim_buf_set_text(
+        bufnr,
+        cursor.line - 1,
+        cursor.col_start,
+        cursor.line - 1,
+        cursor.col_end,
+        { word:upper() }
+      )
     end
   end
 
