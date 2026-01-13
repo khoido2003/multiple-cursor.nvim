@@ -192,7 +192,7 @@ local function start_or_add_next(from_visual)
       delete = function()
         if #state.get_cursors() > 0 then
           editor.delete_word()
-          exit_mode()
+          -- Stay in multi-cursor mode so user can type replacement
         else
           ui.notify("Select at least one match first", vim.log.levels.WARN)
         end

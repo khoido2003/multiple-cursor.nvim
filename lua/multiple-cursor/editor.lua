@@ -1,5 +1,6 @@
 local state = require("multiple-cursor.state")
 local ui = require("multiple-cursor.ui")
+local finder = require("multiple-cursor.finder")
 
 local M = {}
 
@@ -286,6 +287,32 @@ end
 ---Stop editing mode and cleanup
 function M.stop_editing()
   pcall(vim.api.nvim_del_augroup_by_name, augroup_name)
+
+  -- Re-scan for matches of the new word to keep UI consistent
+  -- This ensures that after editing 'foo' to 'bar', we start matching all 'bar's
+  local bufnr = state.get_bufnr()
+  local cursors = state.get_cursors()
+
+  if #cursors > 0 then
+    -- Get the new word from the first cursor position
+    local first = cursors[1]
+    local lines = vim.api.nvim_buf_get_lines(bufnr, first.line - 1, first.line, false)
+    if lines and #lines > 0 then
+      local new_word = lines[1]:sub(first.col_start + 1, first.col_end)
+      if new_word and new_word ~= "" then
+        -- Find all matches for this new word
+        -- Use the configured matching logic (e.g. case sensitivity)
+        local new_matches = finder.find_matches(new_word, bufnr)
+        
+        -- Update state with new word and matches
+        state.update_matches(new_word, new_matches)
+        
+        -- Update highlights to show potential candidates
+        ui.update_highlights()
+      end
+    end
+  end
+
   edit_positions = {}
   last_primary_length = 0
   applying_changes = false
@@ -310,12 +337,39 @@ function M.delete_word()
     return a.col_start > b.col_start
   end)
 
-  -- Delete at each position
+  -- Track offset adjustments per line for cursors on the same line
+  local line_offsets = {}
+
+  -- Delete at each position (reverse order)
   for _, cursor in ipairs(sorted_cursors) do
-    vim.api.nvim_buf_set_text(bufnr, cursor.line - 1, cursor.col_start, cursor.line - 1, cursor.col_end, { "" })
+    local offset = line_offsets[cursor.line] or 0
+    local adjusted_start = cursor.col_start + offset
+    local adjusted_end = cursor.col_end + offset
+    local deleted_len = cursor.col_end - cursor.col_start
+
+    vim.api.nvim_buf_set_text(bufnr, cursor.line - 1, adjusted_start, cursor.line - 1, adjusted_end, { "" })
+
+    -- Track offset for other cursors on same line
+    line_offsets[cursor.line] = offset - deleted_len
+  end
+
+  -- Update the actual cursor positions in state to reflect deleted text
+  -- Reset offsets for forward pass
+  line_offsets = {}
+  for _, cursor in ipairs(cursors) do
+    local offset = line_offsets[cursor.line] or 0
+    local deleted_len = cursor.col_end - cursor.col_start
+
+    -- Apply offset to this cursor
+    cursor.col_start = cursor.col_start + offset
+    cursor.col_end = cursor.col_start -- Now empty (col_end = col_start)
+
+    -- Track offset for subsequent cursors on same line
+    line_offsets[cursor.line] = offset - deleted_len
   end
 
   ui.notify(string.format("Deleted %d occurrences", #cursors), vim.log.levels.INFO)
+  ui.update_highlights()
 end
 
 ---Perform a change operation - same as start_editing (keeps words visible)

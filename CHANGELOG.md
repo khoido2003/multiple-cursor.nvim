@@ -14,11 +14,14 @@
   - `g~` - Toggle case
   - `gu` - Lowercase all
   - `gU` - Uppercase all
+- **Smart Re-scan**: Automatically finds all matches of new word after editing completes (seamlessly continue selecting)
 
 ### Fixed
 - **Overlay Resize**: Overlay now repositions when terminal window is resized
 - **Overlay Position Clamping**: Prevents negative positions on narrow windows
 - **Multi-line Editing**: Improved sync for cursors across different lines
+- **Delete Behavior**: `d` operator now keeps multi-cursor mode active (allows `d` then `i` workflow)
+- **Delete Highlights**: Fixed confusing highlight jumps after deletion; now shows cursor markers
 - **Duplicate Annotations**: Removed duplicate `@return` comments in `state.lua`
 
 ## [0.1.1] - 2026-01-10

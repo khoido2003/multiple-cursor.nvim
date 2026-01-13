@@ -253,9 +253,13 @@ function M.update_highlights()
 
   -- Create a set of cursor positions for quick lookup
   local cursor_set = {}
+  local has_zero_width_cursors = false
   for _, cursor in ipairs(cursors) do
     local key = cursor.line .. ":" .. cursor.col_start
-    cursor_set[key] = true
+    cursor_set[key] = cursor
+    if cursor.col_start == cursor.col_end then
+      has_zero_width_cursors = true
+    end
   end
 
   -- Create a set of skipped positions for quick lookup
@@ -265,26 +269,38 @@ function M.update_highlights()
     skipped_set[key] = true
   end
 
-  -- Highlight all matches
-  for _, match in ipairs(matches) do
-    local key = match.line .. ":" .. match.col_start
-    local hl_group
-
-    if cursor_set[key] then
-      -- This is a selected cursor
-      hl_group = opts.highlights.cursor
-    elseif skipped_set[key] then
-      -- This is a skipped match
-      hl_group = opts.highlights.skipped or "MultipleCursorSkipped"
-    else
-      -- This is an unselected match
-      hl_group = opts.highlights.match
+  -- If cursors have been modified (zero-width after delete), only show cursor markers
+  -- Don't highlight stale matches that now point to wrong text
+  if has_zero_width_cursors then
+    -- Show markers for zero-width cursors only
+    for _, cursor in ipairs(cursors) do
+      vim.api.nvim_buf_set_extmark(bufnr, ns, cursor.line - 1, cursor.col_start, {
+        virt_text = { { "│", opts.highlights.cursor } },
+        virt_text_pos = "overlay",
+      })
     end
+  else
+    -- Normal mode: highlight all matches
+    for _, match in ipairs(matches) do
+      local key = match.line .. ":" .. match.col_start
+      local hl_group
 
-    vim.api.nvim_buf_set_extmark(bufnr, ns, match.line - 1, match.col_start, {
-      end_col = match.col_end,
-      hl_group = hl_group,
-    })
+      if cursor_set[key] then
+        -- This is a selected cursor
+        hl_group = opts.highlights.cursor
+      elseif skipped_set[key] then
+        -- This is a skipped match
+        hl_group = opts.highlights.skipped or "MultipleCursorSkipped"
+      else
+        -- This is an unselected match
+        hl_group = opts.highlights.match
+      end
+
+      vim.api.nvim_buf_set_extmark(bufnr, ns, match.line - 1, match.col_start, {
+        end_col = match.col_end,
+        hl_group = hl_group,
+      })
+    end
   end
 
   -- Add virtual text showing count

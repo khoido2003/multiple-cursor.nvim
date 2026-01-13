@@ -74,6 +74,16 @@ function M.start(word, bufnr, matches)
   M.state.skipped = {}
   M.state.current_idx = 1
   M.state.original_pos = vim.api.nvim_win_get_cursor(0)
+  M.state.original_pos = vim.api.nvim_win_get_cursor(0)
+end
+
+---Update matches and current word (e.g. after editing)
+---@param word string
+---@param matches MultipleCursor.CursorPosition[]
+function M.update_matches(word, matches)
+  M.state.word = word
+  M.state.matches = matches
+  -- Current cursors remain selected; we don't reset them
 end
 
 ---Add a cursor at the current match
