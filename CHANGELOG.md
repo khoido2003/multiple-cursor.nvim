@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3] - 2026-01-14
+
+### Removed
+- **Unused `current` Highlight**: Removed the `current` highlight configuration (was defined but never used in highlighting logic). This simplifies the config without affecting functionality.
+
+---
+
 ## [0.1.2] - 2026-01-13
 
 ### Added

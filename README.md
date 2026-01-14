@@ -100,13 +100,11 @@ require("multiple-cursor").setup({
   highlights = {
     cursor = "MultipleCursor",
     match = "MultipleCursorMatch",
-    current = "MultipleCursorCurrent",
     skipped = "MultipleCursorSkipped",
   },
   highlight_definitions = {
     cursor = { bg = "#00FA9A", fg = "#000000", bold = true }, -- Medium Spring Green (selected cursors)
     match = { bg = "#FFD700", fg = "#000000", bold = true }, -- Gold (unselected matches)
-    current = { bg = "#00CED1", fg = "#000000", bold = true }, -- Dark Turquoise (current review)
     skipped = { bg = "#FF6347", fg = "#000000", bold = true }, -- Tomato (skipped)
     overlay = { bg = "#E84A72", fg = "#ffffff", bold = true }, -- Rose Pink (Monokai-inspired)
   },

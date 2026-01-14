@@ -7,7 +7,6 @@
 ---@class MultipleCursor.Highlights
 ---@field cursor string Highlight group for selected cursors
 ---@field match string Highlight group for unselected matches
----@field current string Highlight group for current match
 ---@field skipped? string Highlight group for skipped matches
 
 ---@alias MultipleCursor.HighlightDefinition vim.api.keyset.highlight
@@ -15,7 +14,6 @@
 ---@class MultipleCursor.HighlightDefinitions
 ---@field cursor? MultipleCursor.HighlightDefinition
 ---@field match? MultipleCursor.HighlightDefinition
----@field current? MultipleCursor.HighlightDefinition
 ---@field skipped? MultipleCursor.HighlightDefinition
 ---@field overlay? MultipleCursor.HighlightDefinition
 
@@ -55,13 +53,11 @@ M.defaults = {
   highlights = {
     cursor = "MultipleCursor",
     match = "MultipleCursorMatch",
-    current = "MultipleCursorCurrent",
     skipped = "MultipleCursorSkipped",
   },
   highlight_definitions = {
     cursor = { bg = "#00FA9A", fg = "#000000", bold = true }, -- Medium Spring Green (softer on eyes)
     match = { bg = "#FFD700", fg = "#000000", bold = true }, -- Gold (warmer than Monokai yellow)
-    current = { bg = "#00CED1", fg = "#000000", bold = true }, -- Dark Turquoise (shifted from Monokai cyan)
     skipped = { bg = "#FF6347", fg = "#000000", bold = true }, -- Tomato (redder than Monokai orange)
     overlay = { bg = "#E84A72", fg = "#ffffff", bold = true }, -- Rose Pink (Monokai-inspired, slightly shifted)
   },

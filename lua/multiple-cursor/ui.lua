@@ -25,11 +25,6 @@ function M.setup_highlights()
     vim.api.nvim_set_hl(0, opts.highlights.match, defs.match)
   end
 
-  -- Current match being reviewed
-  if defs.current then
-    vim.api.nvim_set_hl(0, opts.highlights.current, defs.current)
-  end
-
   -- Skipped matches
   if defs.skipped then
     vim.api.nvim_set_hl(0, opts.highlights.skipped or "MultipleCursorSkipped", defs.skipped)
