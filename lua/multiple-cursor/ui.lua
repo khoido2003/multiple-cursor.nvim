@@ -170,19 +170,32 @@ function M.close_overlay()
 end
 
 local resize_augroup = vim.api.nvim_create_augroup("MultipleCursorResize", { clear = true })
-local highlight_augroup = vim.api.nvim_create_augroup("MultipleCursorHighlights", { clear = true })
 
----Setup UI autocmds
-function M.setup_autocmds()
+-- Persistent autogroup for ColorScheme - only created once and never cleared
+local colorscheme_augroup_setup = false
+
+---Setup persistent ColorScheme autocmd (called once during setup)
+function M.setup_colorscheme_autocmd()
+  if colorscheme_augroup_setup then
+    return
+  end
+  colorscheme_augroup_setup = true
+
+  local colorscheme_augroup = vim.api.nvim_create_augroup("MultipleCursorColorScheme", { clear = true })
+
   -- Force highlights re-application on colorscheme change
+  -- This is persistent and never cleared, so highlights survive variant switches
   vim.api.nvim_create_autocmd("ColorScheme", {
-    group = highlight_augroup,
+    group = colorscheme_augroup,
     pattern = "*",
     callback = function()
       M.setup_highlights()
     end,
   })
+end
 
+---Setup UI autocmds (resize handler, cleared on exit)
+function M.setup_autocmds()
   -- Update overlay position when window is resized
   vim.api.nvim_create_autocmd("VimResized", {
     group = resize_augroup,
@@ -197,13 +210,13 @@ function M.setup_autocmds()
   })
 end
 
----Clear UI autocmds
+---Clear UI autocmds (only clears resize autocmd, NOT the ColorScheme one)
 function M.clear_autocmds()
   pcall(vim.api.nvim_del_augroup_by_id, resize_augroup)
-  pcall(vim.api.nvim_del_augroup_by_id, highlight_augroup)
   -- Re-create for next time
   resize_augroup = vim.api.nvim_create_augroup("MultipleCursorResize", { clear = true })
-  highlight_augroup = vim.api.nvim_create_augroup("MultipleCursorHighlights", { clear = true })
+  -- NOTE: We intentionally do NOT clear the ColorScheme autocmd
+  -- It needs to persist to re-apply highlights when colorscheme variants change
 end
 
 ---Update highlights for editing mode with specific positions

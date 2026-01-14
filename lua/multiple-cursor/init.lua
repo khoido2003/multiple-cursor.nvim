@@ -296,8 +296,9 @@ function M.setup(opts)
   -- Initialize state
   state.init()
 
-  -- Setup highlights
+  -- Setup highlights and persistent ColorScheme autocmd
   ui.setup_highlights()
+  ui.setup_colorscheme_autocmd()
   ui.setup_autocmds()
 
   -- Setup global keymaps
