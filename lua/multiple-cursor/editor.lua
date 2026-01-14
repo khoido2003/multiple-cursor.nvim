@@ -24,6 +24,15 @@ local function debug(msg)
   end
 end
 
+---Cleanup function to reset module state (prevents memory leaks)
+function M.cleanup()
+  edit_positions = {}
+  applying_changes = false
+  last_primary_length = 0
+  last_line_len = 0
+  pcall(vim.api.nvim_del_augroup_by_name, augroup_name)
+end
+
 ---Start editing mode - positions cursor at current word, does NOT delete
 function M.start_editing_mode()
   local bufnr = state.get_bufnr()
@@ -379,7 +388,6 @@ end
 
 ---Start editing at the start of all words (for 'I' key)
 function M.start_editing_at_start()
-  local bufnr = state.get_bufnr()
   local cursors = state.get_cursors()
 
   if #cursors == 0 then
@@ -397,7 +405,6 @@ end
 
 ---Start editing at the end of all words (for 'A' key)
 function M.start_editing_at_end()
-  local bufnr = state.get_bufnr()
   local cursors = state.get_cursors()
 
   if #cursors == 0 then

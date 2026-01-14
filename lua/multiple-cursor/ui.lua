@@ -314,7 +314,7 @@ function M.update_highlights()
   end
 
   -- Add virtual text showing count
-  local total, selected, skipped_count = state.get_counts()
+  local total, selected, _skipped_count = state.get_counts()
   local status_text = string.format(" [%d/%d] selected", selected, total)
 
   -- Show status in virtual text at the end of current line

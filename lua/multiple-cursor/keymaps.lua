@@ -94,6 +94,11 @@ function M.setup_global_keymaps(start_callback)
   local keys = opts.keymaps
 
   if keys.start_next and keys.start_next ~= false then
+    -- Track global keymaps for cleanup
+    M._global_keymaps = M._global_keymaps or {}
+    table.insert(M._global_keymaps, { mode = "n", lhs = keys.start_next })
+    table.insert(M._global_keymaps, { mode = "v", lhs = keys.start_next })
+
     vim.keymap.set("n", keys.start_next, start_callback, {
       noremap = true,
       silent = true,
@@ -111,6 +116,16 @@ function M.setup_global_keymaps(start_callback)
       silent = true,
       desc = "MC: Start multi-cursor on visual selection",
     })
+  end
+end
+
+---Clear global keymaps (for plugin unload)
+function M.clear_global_keymaps()
+  if M._global_keymaps then
+    for _, keymap in ipairs(M._global_keymaps) do
+      pcall(vim.keymap.del, keymap.mode, keymap.lhs)
+    end
+    M._global_keymaps = {}
   end
 end
 

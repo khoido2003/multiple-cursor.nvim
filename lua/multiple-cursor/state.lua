@@ -17,6 +17,12 @@
 
 local M = {}
 
+-- Helper to create a unique numeric key from line and col_start
+-- Using multiplication to create a unique key (supports up to 1M columns per line)
+local function make_key(line, col_start)
+  return line * 1000000 + col_start
+end
+
 ---@type MultipleCursor.State
 M.state = {
   active = false,
@@ -25,6 +31,9 @@ M.state = {
   cursors = {},
   matches = {},
   skipped = {},
+  -- Hash sets for O(1) lookups
+  cursor_set = {},
+  skipped_set = {},
   current_idx = 0,
   namespace = 0,
   original_pos = {},
@@ -45,6 +54,8 @@ function M.reset()
   M.state.cursors = {}
   M.state.matches = {}
   M.state.skipped = {}
+  M.state.cursor_set = {}
+  M.state.skipped_set = {}
   M.state.current_idx = 0
   M.state.original_pos = {}
 end
@@ -72,8 +83,9 @@ function M.start(word, bufnr, matches)
   M.state.matches = matches
   M.state.cursors = {}
   M.state.skipped = {}
+  M.state.cursor_set = {}
+  M.state.skipped_set = {}
   M.state.current_idx = 1
-  M.state.original_pos = vim.api.nvim_win_get_cursor(0)
   M.state.original_pos = vim.api.nvim_win_get_cursor(0)
 end
 
@@ -86,21 +98,20 @@ function M.update_matches(word, matches)
   -- Current cursors remain selected; we don't reset them
 end
 
----Add a cursor at the current match
----@return boolean success
 function M.add_cursor()
   if M.state.current_idx > #M.state.matches then
     return false
   end
 
   local match = M.state.matches[M.state.current_idx]
-  table.insert(M.state.cursors, vim.deepcopy(match))
+  -- Shallow copy is sufficient since CursorPosition only contains primitives
+  table.insert(M.state.cursors, { line = match.line, col_start = match.col_start, col_end = match.col_end })
+  -- Update hash set
+  M.state.cursor_set[make_key(match.line, match.col_start)] = true
   M.state.current_idx = M.state.current_idx + 1
   return true
 end
 
----Skip the current match
----@return boolean success
 function M.skip_current()
   if M.state.current_idx > #M.state.matches then
     return false
@@ -108,14 +119,17 @@ function M.skip_current()
 
   -- Store the skipped match for potential re-selection
   local skipped_match = M.state.matches[M.state.current_idx]
-  table.insert(M.state.skipped, vim.deepcopy(skipped_match))
+  table.insert(
+    M.state.skipped,
+    { line = skipped_match.line, col_start = skipped_match.col_start, col_end = skipped_match.col_end }
+  )
+  -- Update hash set
+  M.state.skipped_set[make_key(skipped_match.line, skipped_match.col_start)] = true
 
   M.state.current_idx = M.state.current_idx + 1
   return true
 end
 
----Re-select the last skipped match
----@return boolean success
 function M.reselect_last()
   if #M.state.skipped == 0 then
     return false
@@ -123,6 +137,9 @@ function M.reselect_last()
 
   -- Get the last skipped match
   local last_skipped = table.remove(M.state.skipped)
+  -- Update hash sets
+  M.state.skipped_set[make_key(last_skipped.line, last_skipped.col_start)] = nil
+  M.state.cursor_set[make_key(last_skipped.line, last_skipped.col_start)] = true
 
   -- Add it to cursors
   table.insert(M.state.cursors, last_skipped)
@@ -136,25 +153,26 @@ function M.get_skipped()
   return M.state.skipped
 end
 
----Remove the last added cursor (does NOT add to skipped - just removes)
----@return boolean success
 function M.remove_last()
   if #M.state.cursors == 0 then
     return false
   end
 
-  table.remove(M.state.cursors)
+  local removed = table.remove(M.state.cursors)
+  -- Update hash set
+  M.state.cursor_set[make_key(removed.line, removed.col_start)] = nil
   return true
 end
 
----Remove the last added cursor AND add it to skipped list
----@return boolean success
 function M.remove_last_to_skipped()
   if #M.state.cursors == 0 then
     return false
   end
 
   local removed = table.remove(M.state.cursors)
+  -- Update hash sets
+  M.state.cursor_set[make_key(removed.line, removed.col_start)] = nil
+  M.state.skipped_set[make_key(removed.line, removed.col_start)] = true
   table.insert(M.state.skipped, removed)
   return true
 end
@@ -172,28 +190,38 @@ function M.get_match_at_position(line, col)
   return nil, nil
 end
 
----Check if position is already in cursors (selected)
+---Check if position is already in cursors (selected) - O(1) lookup
 ---@param line number
 ---@param col_start number
----@return boolean, number? is_selected and index in cursors
+---@return boolean, number? is_selected and index in cursors (index only if needed)
 function M.is_position_selected(line, col_start)
-  for i, cursor in ipairs(M.state.cursors) do
-    if cursor.line == line and cursor.col_start == col_start then
-      return true, i
+  local key = make_key(line, col_start)
+  if M.state.cursor_set[key] then
+    -- Only compute index if needed (for removal operations)
+    for i, cursor in ipairs(M.state.cursors) do
+      if cursor.line == line and cursor.col_start == col_start then
+        return true, i
+      end
     end
+    return true, nil
   end
   return false, nil
 end
 
----Check if position is in skipped list
+---Check if position is in skipped list - O(1) lookup
 ---@param line number
 ---@param col_start number
----@return boolean, number? is_skipped and index in skipped
+---@return boolean, number? is_skipped and index in skipped (index only if needed)
 function M.is_position_skipped(line, col_start)
-  for i, skip in ipairs(M.state.skipped) do
-    if skip.line == line and skip.col_start == col_start then
-      return true, i
+  local key = make_key(line, col_start)
+  if M.state.skipped_set[key] then
+    -- Only compute index if needed (for removal operations)
+    for i, skip in ipairs(M.state.skipped) do
+      if skip.line == line and skip.col_start == col_start then
+        return true, i
+      end
     end
+    return true, nil
   end
   return false, nil
 end
@@ -208,52 +236,64 @@ function M.add_cursor_at_position(line, col)
     return false
   end
 
-  if M.is_position_selected(match.line, match.col_start) then
+  local key = make_key(match.line, match.col_start)
+  if M.state.cursor_set[key] then
     return false
   end
 
-  local is_skipped, skip_idx = M.is_position_skipped(match.line, match.col_start)
-  if is_skipped and skip_idx then
-    table.remove(M.state.skipped, skip_idx)
+  -- Remove from skipped if present
+  if M.state.skipped_set[key] then
+    M.state.skipped_set[key] = nil
+    for i, skip in ipairs(M.state.skipped) do
+      if skip.line == match.line and skip.col_start == match.col_start then
+        table.remove(M.state.skipped, i)
+        break
+      end
+    end
   end
 
-  table.insert(M.state.cursors, vim.deepcopy(match))
+  table.insert(M.state.cursors, { line = match.line, col_start = match.col_start, col_end = match.col_end })
+  M.state.cursor_set[key] = true
   return true
 end
 
----Skip/remove cursor at specific position
----@param line number
----@param col number
----@return boolean success, string action ("skipped" or "removed" or nil)
 function M.skip_at_position(line, col)
   local match, _ = M.get_match_at_position(line, col)
   if not match then
     return false, nil
   end
 
-  local is_selected, cursor_idx = M.is_position_selected(match.line, match.col_start)
-  if is_selected and cursor_idx then
-    local removed = table.remove(M.state.cursors, cursor_idx)
-    table.insert(M.state.skipped, removed)
-    return true, "removed"
+  local key = make_key(match.line, match.col_start)
+
+  -- If selected, move to skipped
+  if M.state.cursor_set[key] then
+    M.state.cursor_set[key] = nil
+    for i, cursor in ipairs(M.state.cursors) do
+      if cursor.line == match.line and cursor.col_start == match.col_start then
+        local removed = table.remove(M.state.cursors, i)
+        table.insert(M.state.skipped, removed)
+        M.state.skipped_set[key] = true
+        return true, "removed"
+      end
+    end
   end
 
-  if not M.is_position_skipped(match.line, match.col_start) then
-    table.insert(M.state.skipped, vim.deepcopy(match))
+  -- If not skipped, add to skipped
+  if not M.state.skipped_set[key] then
+    table.insert(M.state.skipped, { line = match.line, col_start = match.col_start, col_end = match.col_end })
+    M.state.skipped_set[key] = true
     return true, "skipped"
   end
 
   return false, nil
 end
 
----Select all remaining matches
 function M.select_all()
   for _, match in ipairs(M.state.matches) do
-    if
-      not M.is_position_selected(match.line, match.col_start)
-      and not M.is_position_skipped(match.line, match.col_start)
-    then
-      table.insert(M.state.cursors, vim.deepcopy(match))
+    local key = make_key(match.line, match.col_start)
+    if not M.state.cursor_set[key] and not M.state.skipped_set[key] then
+      table.insert(M.state.cursors, { line = match.line, col_start = match.col_start, col_end = match.col_end })
+      M.state.cursor_set[key] = true
     end
   end
 end

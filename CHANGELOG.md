@@ -2,8 +2,19 @@
 
 ## [0.1.3] - 2026-01-14
 
+### Fixed
+- **Duplicate Line Bug**: Removed duplicate assignment of `original_pos` in `state.lua`
+- **Unused Variables**: Cleaned up unused `bufnr` variables in `editor.lua` and `skipped_count` in `ui.lua`
+
+### Improved
+- **Memory Efficiency**: Replaced `vim.deepcopy()` with shallow copies in `state.lua` for cursor position tables (reduces allocation overhead)
+- **O(1) Position Lookups**: Added hash sets (`cursor_set`, `skipped_set`) for instant position checks instead of O(n) array scans - significant speedup with many matches
+- **Buffer Safety**: Added buffer validity check in `finder.find_matches()` to prevent errors on invalid buffers
+- **Resource Cleanup**: Added `editor.cleanup()` function to properly reset module state
+- **Keymap Management**: Added `keymaps.clear_global_keymaps()` for proper plugin unload cleanup
+
 ### Removed
-- **Unused `current` Highlight**: Removed the `current` highlight configuration (was defined but never used in highlighting logic). This simplifies the config without affecting functionality.
+- **Unused `current` Highlight**: Removed the `current` highlight configuration (was defined but never used)
 
 ---
 

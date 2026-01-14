@@ -51,6 +51,11 @@ function M.find_matches(word, bufnr)
     return matches
   end
 
+  -- Validate buffer before accessing
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return matches
+  end
+
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
   -- Build search pattern
